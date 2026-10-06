@@ -15,7 +15,7 @@
 - Title ID 改为 `0x420000000000000F`（Dimasick 版是 `...0E`，原版 `...00`），可并存。
 - 界面语言只留 `zh-cn`（默认）和 `en`；`strings.cpp` 已删俄语列和其他内置表；`default-config.ini` 为 `language=zh-cn`。
 - README、Issue 模板、工作流文字、Makefile 注释、`setup_build_env.sh` 全部中文。
-- 版本号（第一版为 `5.6.0-dfer.1`，现为 `5.6.0-dfer.2`）：`Makefile`、`README.md` 的 `CURRENT_VERSION_START/END` 标记、`DferTune/toolbox.json`、`overlay/Makefile` 四处必须一致（`scripts/verify-readme-automation.mjs` 校验）。
+- 版本号（第一版为 `5.6.0-dfer.1`，现为 `5.6.0-dfer.3`）：`Makefile`、`README.md` 的 `CURRENT_VERSION_START/END` 标记、`DferTune/toolbox.json`、`overlay/Makefile` 四处必须一致（`scripts/verify-readme-automation.mjs` 校验）。
 - 刻意保留 `libryazhahand` 与 `/config/ryazhahand/`（外部依赖，Makefile 按固定提交从 `Dimasick-git/libryazhahand` 克隆）。
 - `scripts/verify-localizations.mjs` 固定了 3 条译文（等待 HOME、键盘时暂停、控制器同步时暂停），不要改。
 - README 徽章：版本/下载用 shields.io（有缓存，下载徽章曾长时间显示 `NO RELEASES FOUND`，可能需先有人下载过附件）；访问量用 `hits.sh`（支持中文标签，用户已确认显示正常，校验脚本已同步该地址）。原 visitor-badge.laobi.icu 中文被截断，已弃用。
@@ -51,7 +51,7 @@
 - 对策：`scripts/music_to_ascii.py`（需要 `pip install mutagen`）把歌曲复制成英文名，并把中文文件名/GBK 乱码标签写成 UTF-16 标签；DferTune 列表显示的是标签（`tag_reader.cpp` 支持 ID3v2 的 Latin-1/UTF-16/UTF-8、Vorbis、WAV 内 ID3，旧式 GBK 标签会乱码）。
 - 想过但未做：目录里有文件但全被过滤时，把“空…”改成“共 N 项，没有可播放的音乐文件”。
 
-## 第三轮（尚未发版，已在 main）
+## 第三轮（5.6.0-dfer.3）
 
 - 界面加宽：`ult::DefaultFramebufferWidth` 默认 448，`main.cpp` 的 `initServices()` 里（在 Tesla 创建帧缓冲之前）改成 `config::get_overlay_width()`，读 `config.ini` 的 `overlay_width`，默认 576，范围 448..704 且必须是 32 的倍数（块线性帧缓冲的行跨度是 `FramebufferWidth/4`，非 32 倍数会错位）。宽度不是 448 时库的 `correctFrameSize` 为假：自定义壁纸 `wallpaper.rgba` 不显示、右对齐不生效。播放页封面 `kMaxArt=300`，保证一屏放得下。
 - `elm_wrappedheader.hpp`：`WrappedHeader`/`addWrappedHeader` 取代会跑马灯的 `CompactCategoryHeader`（带右侧值的 “Current game” 标题除外），长文字换行、单行时与原来同样 33px。列表行 `ListItem` 本身选中时就会自动滚动长文字。
@@ -70,6 +70,7 @@
 - `.github/workflows/build-and-release.yml`：push 到 main 且改动 `Makefile`、`DferTune/`、`common/`、`ipc/`、`overlay/` 等路径、且 `v<版本>` 标签不存在时，自动构建并发布。已加 `workflow_dispatch`（输入 `publish`，默认 false 仅构建上传产物），并设 `defaults.run.shell: bash -e {0}`（devkitpro 容器默认 sh 不支持 `[[ ]]`，否则读不到 release 说明文件）。
 - 提交信息带 `[skip ci]` 可避免自动发版。
 - release 正文来自 `.github/releases/v<版本>.md`。标签已存在时，手动触发 `publish=false` 的工作流（约 20–30 秒）会把该文件同步到现有 release。
+- 已发布 release `v5.6.0-dfer.2`（含后台模块修复与帮助/关于页）和 `v5.6.0-dfer.3`（界面加宽、标题换行、空目录原因提示；转换脚本只在仓库 `scripts/` 里，不在安装包内）。发布说明在 `.github/releases/v<版本>.md`。
 - 已发布 release `v5.6.0-dfer.1`（含 `DferTune.zip` 约 614KB、`DferTune-Overlay.ovl` 约 784KB，正文中文）；`v5.6.0-dfer.2` 的发布说明在 `.github/releases/v5.6.0-dfer.2.md`，推 main 后由工作流构建发布。
 - 仍未验证：真机运行（尤其 21.1.0）、Tesla 呼出组合键（文档写“常见为 L+↓+右摇杆按下”）、菜单名称「浏览/播放列表/设置」。
 
