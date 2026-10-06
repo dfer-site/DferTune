@@ -42,6 +42,7 @@
 - 远程分支 `claude/gallant-hawking-vqbi7i`（第二轮遗留，内容已并入 main）在沙箱里删不掉（`git push --delete` 被断开），需用户在 GitHub 上手动删除。
 - 沙箱没有 devkitPro，Docker 守护进程不可用且 Docker Hub 匿名拉取被限流。**正式工作流在版本号不变时 `build` 任务会被跳过**，不能用它验证编译。做法：因为只用 `main`，临时工作流改为 `on: push` 到 `main`（或用 `workflow_dispatch`，但新文件须先在默认分支存在），用 `devkitpro/devkita64` 容器跑 `make prepare-overlay-lib && make clean && make`，先单独提交该工作流并确认编译通过，再提交真正的改动或删除它；注意带版本号变化的推送会直接发版。（第二轮曾在开发分支上这样做。）
 - 纯逻辑可在本机验证：用桩头文件（`switch.h`、`tesla.hpp`）加内存版假 IPC 编译真实的 `play_context.cpp`，并把 `/config/DferTune` 用 `sed` 改到 `/tmp` 下，**不要**对 `/config` 之类系统路径做 `rm -rf`（会被安全检查拦下）。
+- **只改发布说明（`.github/releases/*.md`）、README、日志这类文件时，推送不会触发发布工作流**（它的 `paths` 过滤只含代码目录、Makefile 和几个校验脚本），所以 release 正文不会自动更新。要同步，推送后手动触发一次 `build-and-release.yml`（`publish=false`）：版本标签已存在，只会跑 `sync-release-notes`，build 被跳过；然后读 release 正文确认。（dfer.4 的升级说明就是这样补更新的。）
 - 手动触发 `build-and-release.yml` 时 `sync-release-notes` 会按仓库里的 `.github/releases/v<版本>.md` 改写已有 release 正文，注意别用开发分支上的旧文件触发。
 - 仍未在真机验证：游戏焦点修复、气泡位置与换行、帮助页滚动、L/R/ZR 快捷键手感。
 
