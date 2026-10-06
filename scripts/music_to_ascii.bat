@@ -1,24 +1,7 @@
 @echo off
-chcp 65001 >nul
-rem ============================================================================
-rem  music_to_ascii.bat  把音乐转成英文文件名,中文歌名保存在歌曲标签里
-rem
-rem  为什么需要:有些 SD 卡上,Switch 读不出中文文件名的文件,英文名就正常。
-rem  DferTune 的列表显示的是标签里的歌名和歌手,所以文件名改成英文,
-rem  标签里仍是中文,界面上看到的还是中文。
-rem
-rem  用法:把音乐文件夹拖到这个文件上,或者双击后输入文件夹路径。
-rem  路径后面加 -r 可以连子文件夹里的歌一起处理,例如:
-rem      music_to_ascii.bat "F:\music" -r
-rem
-rem  结果:直接在原文件夹里生成英文名的副本,例如 0001_a1b2c3.mp3。
-rem  再次运行时同一首歌会覆盖上次生成的副本,新增的歌曲接在已有序号后面,
-rem  已经转换好的文件不会被重复转换。中文名的原文件不会被改动或删除。
-rem  每个文件夹最多放 300 首,更多的放进 part02、part03 子文件夹。
-rem
-rem  说明:下面可执行的命令行刻意只用英文字符,因为 cmd.exe 对其它字符的
-rem  处理不可靠。真正的工作和所有中文提示都在文件后半部分的 PowerShell 里。
-rem ============================================================================
+rem music_to_ascii.bat - converts songs to English file names; see the Chinese notes in the PowerShell part below.
+rem Drag a music folder onto this file or double-click it. Add -r after the path to include sub-folders.
+rem Keep every line above the PowerShell part plain ASCII: cmd.exe runs non-ASCII text as commands.
 setlocal
 set "MTA_BAT=%~f0"
 set "MTA_SRC=%~1"
@@ -30,9 +13,32 @@ echo.
 pause
 exit /b %MTA_CODE%
 #PS-BEGIN
-# ==== 以下是 PowerShell 部分(由上面的批处理调用,Windows 自带 PowerShell 5.1 即可) ====
+# ============================================================================
+#  music_to_ascii.bat  把音乐转成英文文件名,中文歌名保存在歌曲标签里
+#
+#  为什么需要:有些 SD 卡上,Switch 读不出中文文件名的文件,英文名就正常。
+#  DferTune 的列表显示的是标签里的歌名和歌手,所以文件名改成英文,
+#  标签里仍是中文,界面上看到的还是中文。
+#
+#  用法:把音乐文件夹拖到这个文件上,或者双击后输入文件夹路径。
+#  路径后面加 -r 可以连子文件夹里的歌一起处理,例如:
+#      music_to_ascii.bat "F:\music" -r
+#
+#  结果:直接在原文件夹里生成英文名的副本,例如 0001_a1b2c3.mp3。
+#  再次运行时同一首歌会覆盖上次生成的副本,新增的歌曲接在已有序号后面,
+#  已经转换好的文件不会被重复转换。中文名的原文件不会被改动或删除。
+#  每个文件夹最多放 300 首,更多的放进 part02、part03 子文件夹。
+#
+#  注意:文件前半部分(给 cmd.exe 执行的命令行)只能用英文字符,
+#  写入中文会让 cmd.exe 把它当成命令执行而报错。中文说明和提示都在这个 PowerShell 部分。
+# ============================================================================
 $ErrorActionPreference = 'Stop'
-try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
+$script:exitCode = 0
+$oldOutputEncoding = $null
+try {
+    $oldOutputEncoding = [Console]::OutputEncoding
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+} catch {}
 try { [Text.Encoding]::RegisterProvider([Text.CodePagesEncodingProvider]::Instance) } catch {}
 
 $utf8   = New-Object Text.UTF8Encoding($false)
@@ -189,29 +195,6 @@ function Update-Mp3Tag([string]$path, [string]$stem) {
     return $title
 }
 
-# ---------------------------------- 主流程 ----------------------------------
-$src = $env:MTA_SRC
-if (-not $src) { $src = Read-Host '请输入或拖入音乐文件夹的路径' }
-if ($src) { $src = $src.Trim().Trim('"').TrimEnd('\', '/') }
-if (-not $src -or -not (Test-Path -LiteralPath $src -PathType Container)) {
-    Write-Host "找不到音乐文件夹:$src"
-    exit 1
-}
-$recurse = ($env:MTA_RECURSE -eq '1')
-$target = $src   # 就在原文件夹里生成;同名的副本直接覆盖
-
-# 之前已经生成过的英文名副本:(哈希+扩展名) -> 路径,并找出最大序号。再次运行时覆盖它们。
-$outRe = '^(\d{4})_([0-9a-f]{6})(\.(?:mp3|flac|wav|wave))$'
-$existing = @{}
-$maxIndex = 0
-foreach ($p in (Get-ChildItem -LiteralPath $target -File -Recurse -ErrorAction SilentlyContinue)) {
-    if ($p.Name -match $outRe) {
-        $existing[($Matches[2].ToLowerInvariant() + $Matches[3].ToLowerInvariant())] = $p.FullName
-        $n = [int]$Matches[1]
-        if ($n -gt $maxIndex) { $maxIndex = $n }
-    }
-}
-
 # 前 300 首放在文件夹本身,之后每 300 首一个 part02、part03 ……(与总数无关,序号稳定)
 function Get-OutFolder([string]$base, [int]$index) {
     $group = [int][Math]::Floor(($index - 1) / $chunk)
@@ -223,72 +206,110 @@ function Get-Relative([string]$full, [string]$base) {
     return $full.Substring($base.Length).TrimStart('\', '/')
 }
 
-if ($recurse) { $all = Get-ChildItem -LiteralPath $src -File -Recurse }
-else          { $all = Get-ChildItem -LiteralPath $src -File }
-# 已转换的结果(0001_xxxxxx.mp3 这种名字)不再当作新歌
-$files = @($all | Where-Object {
-        $extensions -contains $_.Extension.ToLowerInvariant() -and
-        -not $_.Name.StartsWith('.') -and
-        -not ($_.Name -match $outRe)
-    } | Sort-Object FullName)
-if ($files.Count -eq 0) {
-    Write-Host '没有找到需要转换的 mp3 / flac / wav 文件。请确认扩展名(Windows 默认隐藏扩展名)。'
-    exit 1
-}
-
-Write-Host "文件夹:$src"
-Write-Host "共 $($files.Count) 个文件"
-$rows = @{}
-$added = 0
-$replaced = 0
-$nextIndex = $maxIndex
-foreach ($f in $files) {
-    $ext = $f.Extension.ToLowerInvariant()
-    $hash = Get-ShortHash $f.BaseName
-    $key = $hash + $ext
-    if ($existing.ContainsKey($key)) {
-        $dst = $existing[$key]
-        $status = '覆盖'
-        $replaced++
-    } else {
-        $nextIndex++
-        $dst = Join-Path (Get-OutFolder $target $nextIndex) ('{0:D4}_{1}{2}' -f $nextIndex, $hash, $ext)
-        $existing[$key] = $dst
-        $status = '新增'
-        $added++
+function Invoke-Main {
+    Write-Host '=== DferTune:把音乐转成英文文件名 ==='
+    Write-Host '直接在原文件夹里生成英文名的副本;同名的副本会被覆盖;你的中文名原文件不会被改动。'
+    Write-Host ''
+    # ---------------------------------- 主流程 ----------------------------------
+    $src = $env:MTA_SRC
+    if (-not $src) { $src = Read-Host '请输入或拖入音乐文件夹的路径' }
+    if ($src) { $src = $src.Trim().Trim('"').TrimEnd('\', '/') }
+    if (-not $src -or -not (Test-Path -LiteralPath $src -PathType Container)) {
+        Write-Host "找不到音乐文件夹:$src"
+        $script:exitCode = 1
+        return
     }
-    $dstDir = Split-Path -Parent $dst
-    if (-not (Test-Path -LiteralPath $dstDir)) { New-Item -ItemType Directory -Path $dstDir | Out-Null }
-    Copy-Item -LiteralPath $f.FullName -Destination $dst -Force   # 同名直接覆盖
+    $recurse = ($env:MTA_RECURSE -eq '1')
+    $target = $src   # 就在原文件夹里生成;同名的副本直接覆盖
 
-    $title = ''
-    if ($ext -eq '.mp3') {
-        try {
-            $title = Update-Mp3Tag $dst $f.BaseName
-            if ($title -eq $null) { $title = ''; Write-Host "  提示:$($f.Name) 的标签格式较特殊,已原样保留" }
-        } catch {
-            Write-Host "  警告:$($f.Name) 的标签处理失败($($_.Exception.Message)),已保留副本"
+    # 之前已经生成过的英文名副本:(哈希+扩展名) -> 路径,并找出最大序号。再次运行时覆盖它们。
+    $outRe = '^(\d{4})_([0-9a-f]{6})(\.(?:mp3|flac|wav|wave))$'
+    $existing = @{}
+    $maxIndex = 0
+    foreach ($p in (Get-ChildItem -LiteralPath $target -File -Recurse -ErrorAction SilentlyContinue)) {
+        if ($p.Name -match $outRe) {
+            $existing[($Matches[2].ToLowerInvariant() + $Matches[3].ToLowerInvariant())] = $p.FullName
+            $n = [int]$Matches[1]
+            if ($n -gt $maxIndex) { $maxIndex = $n }
         }
     }
-    $rel = Get-Relative $dst $target
-    $rows[$rel] = [pscustomobject]@{ '新文件名' = $rel; '原文件名' = (Get-Relative $f.FullName $src); '歌名' = $title }
-    Write-Host "  [$status] $(Split-Path -Leaf $dst)  <-  $($f.Name)"
-}
 
-# 对照表.csv:合并上次的记录,本次处理过的条目更新
-$csvPath = Join-Path $target '对照表.csv'
-$merged = @{}
-if (Test-Path -LiteralPath $csvPath) {
-    foreach ($r in (Import-Csv -LiteralPath $csvPath -Encoding UTF8)) {
-        if ($r.'新文件名') { $merged[$r.'新文件名'] = $r }
+
+    if ($recurse) { $all = Get-ChildItem -LiteralPath $src -File -Recurse }
+    else          { $all = Get-ChildItem -LiteralPath $src -File }
+    # 已转换的结果(0001_xxxxxx.mp3 这种名字)不再当作新歌
+    $files = @($all | Where-Object {
+            $extensions -contains $_.Extension.ToLowerInvariant() -and
+            -not $_.Name.StartsWith('.') -and
+            -not ($_.Name -match $outRe)
+        } | Sort-Object FullName)
+    if ($files.Count -eq 0) {
+        Write-Host '没有找到需要转换的 mp3 / flac / wav 文件。请确认扩展名(Windows 默认隐藏扩展名)。'
+        $script:exitCode = 1
+        return
+    }
+
+    Write-Host "文件夹:$src"
+    Write-Host "共 $($files.Count) 个文件"
+    $rows = @{}
+    $added = 0
+    $replaced = 0
+    $nextIndex = $maxIndex
+    foreach ($f in $files) {
+        $ext = $f.Extension.ToLowerInvariant()
+        $hash = Get-ShortHash $f.BaseName
+        $key = $hash + $ext
+        if ($existing.ContainsKey($key)) {
+            $dst = $existing[$key]
+            $status = '覆盖'
+            $replaced++
+        } else {
+            $nextIndex++
+            $dst = Join-Path (Get-OutFolder $target $nextIndex) ('{0:D4}_{1}{2}' -f $nextIndex, $hash, $ext)
+            $existing[$key] = $dst
+            $status = '新增'
+            $added++
+        }
+        $dstDir = Split-Path -Parent $dst
+        if (-not (Test-Path -LiteralPath $dstDir)) { New-Item -ItemType Directory -Path $dstDir | Out-Null }
+        Copy-Item -LiteralPath $f.FullName -Destination $dst -Force   # 同名直接覆盖
+
+        $title = ''
+        if ($ext -eq '.mp3') {
+            try {
+                $title = Update-Mp3Tag $dst $f.BaseName
+                if ($title -eq $null) { $title = ''; Write-Host "  提示:$($f.Name) 的标签格式较特殊,已原样保留" }
+            } catch {
+                Write-Host "  警告:$($f.Name) 的标签处理失败($($_.Exception.Message)),已保留副本"
+            }
+        }
+        $rel = Get-Relative $dst $target
+        $rows[$rel] = [pscustomobject]@{ '新文件名' = $rel; '原文件名' = (Get-Relative $f.FullName $src); '歌名' = $title }
+        Write-Host "  [$status] $(Split-Path -Leaf $dst)  <-  $($f.Name)"
+    }
+
+    # 对照表.csv:合并上次的记录,本次处理过的条目更新
+    $csvPath = Join-Path $target '对照表.csv'
+    $merged = @{}
+    if (Test-Path -LiteralPath $csvPath) {
+        foreach ($r in (Import-Csv -LiteralPath $csvPath -Encoding UTF8)) {
+            if ($r.'新文件名') { $merged[$r.'新文件名'] = $r }
+        }
+    }
+    foreach ($k in $rows.Keys) { $merged[$k] = $rows[$k] }
+    $merged.Values | Sort-Object { $_.'新文件名' } | Export-Csv -LiteralPath $csvPath -NoTypeInformation -Encoding UTF8
+
+    Write-Host ''
+    Write-Host "完成:新增 $added 首,覆盖 $replaced 首。英文名副本就在 $target 里;对照表.csv 记录了新旧文件名。"
+    Write-Host '你的中文名原文件没有被改动;确认英文名副本正常后,可以把原文件删掉。'
+    if (@($files | Where-Object { $_.Extension.ToLowerInvariant() -ne '.mp3' }).Count -gt 0) {
+        Write-Host '注意:flac / wav 只改了文件名,没有处理标签。它们的歌名会显示成英文文件名;需要处理请改用 music_to_ascii.py。'
     }
 }
-foreach ($k in $rows.Keys) { $merged[$k] = $rows[$k] }
-$merged.Values | Sort-Object { $_.'新文件名' } | Export-Csv -LiteralPath $csvPath -NoTypeInformation -Encoding UTF8
 
-Write-Host ''
-Write-Host "完成:新增 $added 首,覆盖 $replaced 首。英文名副本就在 $target 里;对照表.csv 记录了新旧文件名。"
-Write-Host '你的中文名原文件没有被改动;确认英文名副本正常后,可以把原文件删掉。'
-if (@($files | Where-Object { $_.Extension.ToLowerInvariant() -ne '.mp3' }).Count -gt 0) {
-    Write-Host '注意:flac / wav 只改了文件名,没有处理标签。它们的歌名会显示成英文文件名;需要处理请改用 music_to_ascii.py。'
+try {
+    Invoke-Main | Out-Null
+} finally {
+    try { if ($oldOutputEncoding) { [Console]::OutputEncoding = $oldOutputEncoding } } catch {}
 }
+exit $script:exitCode
