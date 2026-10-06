@@ -127,7 +127,7 @@ DferTune 只会在 SD 卡上占用下面三处位置,没有写入系统存储,�
 
 不想删除文件、只想让它不再开机自启:删除 `atmosphere/contents/420000000000000F/flags/boot2.flag` 并重启即可。想恢复时,在同一位置新建一个同名空文件(`boot2.flag`),再重启。此时悬浮菜单仍会出现在 Tesla 里,但因为后台模块没有运行,打开后无法控制播放。
 
-也可以不动文件,用系统里的后台模块管理工具(例如读取 `toolbox.json` 的 Ovl-Sysmodules 一类 Tesla 插件)在菜单里启动、停止 DferTune,或开关它的开机自启。这类工具只管理模块的运行状态,**不会删除** SD 卡上的文件;要彻底卸载,仍需按上面的「卸载步骤」手动删除文件。
+也可以不动文件,用系统里的后台模块管理工具(例如读取 `toolbox.json` 的 Ovl-Sysmodules 一类 Tesla 插件)在菜单里启动、停止 DferTune,或开关它的开机自启。较新版本的这类工具还自带"卸载"功能,会直接删除 SD 卡上对应的模块文件(`atmosphere/contents/420000000000000F/`)。注意它可能不会清理 `/switch/.overlays/DferTune-Overlay.ovl` 和 `/config/DferTune/`,卸载后请检查这两处,按上面的「卸载步骤」补删;不用这类工具时,按「卸载步骤」手动删除即可。
 
 ### 卸载注意事项
 
