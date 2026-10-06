@@ -1,6 +1,6 @@
 # AI 上下文记录
 
-更新时间：2026-10-06 06:40 UTC
+更新时间：2026-10-06 07:20 UTC
 
 ## 项目与仓库
 
@@ -50,6 +50,14 @@
 - 用户实测：SD 卡上中文文件名的 mp3 在 DBI 和 DferTune 里都看不到，改英文名就正常 → 是 Horizon 文件系统层的问题，插件无法修复（浏览页只按扩展名过滤，不按文件名字符过滤）。
 - 对策：`scripts/music_to_ascii.py`（需要 `pip install mutagen`）把歌曲复制成英文名，并把中文文件名/GBK 乱码标签写成 UTF-16 标签；DferTune 列表显示的是标签（`tag_reader.cpp` 支持 ID3v2 的 Latin-1/UTF-16/UTF-8、Vorbis、WAV 内 ID3，旧式 GBK 标签会乱码）。
 - 想过但未做：目录里有文件但全被过滤时，把“空…”改成“共 N 项，没有可播放的音乐文件”。
+
+## 第三轮（尚未发版，已在 main）
+
+- 界面加宽：`ult::DefaultFramebufferWidth` 默认 448，`main.cpp` 的 `initServices()` 里（在 Tesla 创建帧缓冲之前）改成 `config::get_overlay_width()`，读 `config.ini` 的 `overlay_width`，默认 576，范围 448..704 且必须是 32 的倍数（块线性帧缓冲的行跨度是 `FramebufferWidth/4`，非 32 倍数会错位）。宽度不是 448 时库的 `correctFrameSize` 为假：自定义壁纸 `wallpaper.rgba` 不显示、右对齐不生效。播放页封面 `kMaxArt=300`，保证一屏放得下。
+- `elm_wrappedheader.hpp`：`WrappedHeader`/`addWrappedHeader` 取代会跑马灯的 `CompactCategoryHeader`（带右侧值的 “Current game” 标题除外），长文字换行、单行时与原来同样 33px。列表行 `ListItem` 本身选中时就会自动滚动长文字。
+- 浏览页空目录会说明原因（没读到内容 / N 个文件格式不支持 / 跳过 N 个隐藏项），用不可聚焦的 `TextBlock`。
+- `scripts/music_to_ascii.bat`：bat 只含 ASCII，真正逻辑在文件后半段的 PowerShell，用 `#PS`+`-BEGIN` 标记（拼接写法避免命令行里自己匹配到自己）经 `Invoke-Expression` 运行，参数走环境变量 `MTA_SRC/MTA_RECURSE/MTA_BAT`。在 Linux 上用官方 PowerShell 7 测过（下载 `PowerShell/PowerShell` releases 的 linux-x64 tar 到独立目录），样本含 GBK、UTF-16、ID3v2.2/2.3/2.4、空歌名、封面帧；mp3 之外只改名。bat 注释里不能出现 `> | & ^ % ( )`。
+- 验证方式更新：先把只编译的临时工作流 `dev-compile-check.yml`（`on: push` 到 main，容器 `devkitpro/devkita64`）和代码一起推到 main，看到编译通过后再用 `[skip ci]` 提交删除它。版本号不变时发布工作流不会构建，只会跑 `sync-release-notes`。
 
 ## 行为（读代码得出，未经真机验证）
 
