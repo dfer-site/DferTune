@@ -121,6 +121,14 @@ DferTune 是 Nintendo Switch 的后台音乐播放器(sysmodule + Tesla 悬浮�
 
 - **Tesla 菜单里看不到 DferTune**:确认文件在 `/switch/.overlays/`,并且 Tesla 环境本身能正常打开。
 - **打开后提示错误或无法控制**:通常是后台模块没有运行。确认 `atmosphere/contents/420000000000000F/` 完整、含 `flags/boot2.flag`,并完整重启过 Atmosphère。
+- **中文文件名的歌在 DBI 和 DferTune 里都看不到,英文名就正常**:这是 Switch 对 SD 卡文件名的读取问题,不是 DferTune 的问题(两个程序读目录用的是同一套系统接口)。解决办法是让**文件名用英文,中文歌名放在歌曲标签里**,DferTune 的列表显示的是标签里的歌名和歌手。仓库里有现成的脚本 [`scripts/music_to_ascii.py`](scripts/music_to_ascii.py):
+
+  ```
+  pip install mutagen
+  python music_to_ascii.py F:\music F:\music_ascii
+  ```
+
+  它只**复制**不修改原文件:文件改成 `0001_a1b2c3.mp3` 这样的英文名;没有歌名标签的,把原来的中文文件名写进去;旧式 GBK 乱码标签会修成 Unicode;每个文件夹最多 300 首(超过自动拆成 `part01`、`part02`…);并生成 `对照表.csv`。处理完把输出文件夹里的内容放进 SD 卡的 `/music/` 即可。
 - **想保留原有设置**:更新时不要覆盖 `/config/DferTune/config.ini`。
 - DferTune 使用独立的 Title ID(`0x420000000000000F`)和配置目录(`/config/DferTune/`),不会覆盖原版 sys-tune 或 RyazhaTune。同时运行多个后台音乐模块会互相争抢音频,建议只启用其中一个。
 

@@ -45,6 +45,12 @@
 - 手动触发 `build-and-release.yml` 时 `sync-release-notes` 会按仓库里的 `.github/releases/v<版本>.md` 改写已有 release 正文，注意别用开发分支上的旧文件触发。
 - 仍未在真机验证：游戏焦点修复、气泡位置与换行、帮助页滚动、L/R/ZR 快捷键手感。
 
+## 已知现象：中文文件名读不到
+
+- 用户实测：SD 卡上中文文件名的 mp3 在 DBI 和 DferTune 里都看不到，改英文名就正常 → 是 Horizon 文件系统层的问题，插件无法修复（浏览页只按扩展名过滤，不按文件名字符过滤）。
+- 对策：`scripts/music_to_ascii.py`（需要 `pip install mutagen`）把歌曲复制成英文名，并把中文文件名/GBK 乱码标签写成 UTF-16 标签；DferTune 列表显示的是标签（`tag_reader.cpp` 支持 ID3v2 的 Latin-1/UTF-16/UTF-8、Vorbis、WAV 内 ID3，旧式 GBK 标签会乱码）。
+- 想过但未做：目录里有文件但全被过滤时，把“空…”改成“共 N 项，没有可播放的音乐文件”。
+
 ## 行为（读代码得出，未经真机验证）
 
 - 「浏览」从 `/music/` 开始（无则 `/`），只读进入的文件夹，仅认 `.mp3 .flac .wav .wave`，跳过隐藏项。按键：A 播放、Y 加入、X 添加全部、− 设为开机播放、B 返回。
