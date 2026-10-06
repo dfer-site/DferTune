@@ -15,7 +15,7 @@
 - Title ID 改为 `0x420000000000000F`（Dimasick 版是 `...0E`，原版 `...00`），可并存。
 - 界面语言只留 `zh-cn`（默认）和 `en`；`strings.cpp` 已删俄语列和其他内置表；`default-config.ini` 为 `language=zh-cn`。
 - README、Issue 模板、工作流文字、Makefile 注释、`setup_build_env.sh` 全部中文。
-- 版本号（第一版为 `5.6.0-dfer.1`，现为 `5.6.0-dfer.3`）：`Makefile`、`README.md` 的 `CURRENT_VERSION_START/END` 标记、`DferTune/toolbox.json`、`overlay/Makefile` 四处必须一致（`scripts/verify-readme-automation.mjs` 校验）。
+- 版本号（第一版为 `5.6.0-dfer.1`，现为 `5.6.0-dfer.4`）：`Makefile`、`README.md` 的 `CURRENT_VERSION_START/END` 标记、`DferTune/toolbox.json`、`overlay/Makefile` 四处必须一致（`scripts/verify-readme-automation.mjs` 校验）。
 - 刻意保留 `libryazhahand` 与 `/config/ryazhahand/`（外部依赖，Makefile 按固定提交从 `Dimasick-git/libryazhahand` 克隆）。
 - `scripts/verify-localizations.mjs` 固定了 3 条译文（等待 HOME、键盘时暂停、控制器同步时暂停），不要改。
 - README 徽章：版本/下载用 shields.io（有缓存，下载徽章曾长时间显示 `NO RELEASES FOUND`，可能需先有人下载过附件）；访问量用 `hits.sh`（支持中文标签，用户已确认显示正常，校验脚本已同步该地址）。原 visitor-badge.laobi.icu 中文被截断，已弃用。
@@ -60,6 +60,14 @@
 - `scripts/music_to_ascii.bat`：bat 只含 ASCII，真正逻辑在文件后半段的 PowerShell，用 `#PS`+`-BEGIN` 标记（拼接写法避免命令行里自己匹配到自己）经 `Invoke-Expression` 运行，参数走环境变量 `MTA_SRC/MTA_RECURSE/MTA_BAT`。在 Linux 上用官方 PowerShell 7 测过（下载 `PowerShell/PowerShell` releases 的 linux-x64 tar 到独立目录），样本含 GBK、UTF-16、ID3v2.2/2.3/2.4、空歌名、封面帧；mp3 之外只改名。bat 注释里不能出现 `> | & ^ % ( )`。
 - 验证方式更新：先把只编译的临时工作流 `dev-compile-check.yml`（`on: push` 到 main，容器 `devkitpro/devkita64`）和代码一起推到 main，看到编译通过后再用 `[skip ci]` 提交删除它。版本号不变时发布工作流不会构建，只会跑 `sync-release-notes`。
 
+## 第四轮（5.6.0-dfer.4）
+
+- **库的 `drawString()` 的 `maxWidth` 不会换行，只是超出宽度就停止绘制（截断）**，只有字符串里的 `\n` 才换行。所以所有“自动换行”都必须先自己插换行：`textwrap_core.hpp`（只依赖“某个字符多宽”的回调，可在本机单元测试：中文逐字断、标点不进行首、英文按单词、超长单词拆开）+ `elm_textwrap.hpp`（用渲染器自己的字宽，带缓存）；`TextBlock`、`WrappedHeader`、气泡提示都靠它换行并据此算高度。dfer.3 发布说明里“自动换行”的说法当时并不属实，dfer.4 说明已更正。
+- 默认重复模式改为列表循环：`TuneRepeatMode` 为 关=0、单曲=1、列表=2，原默认是 1。`common/config/config.cpp` 的 `load()` 里对旧默认值 `repeat=1` 做一次性迁移，标记键 `repeat_default_v2`（显式的 0 或 2 保留）；`default-config.ini` 为 `repeat=2`。
+- 设置页“播放列表”一行不再显示歌曲数，只显示播放标记或箭头（`playlistRowValue()`）；标题仍是“播放列表 N”（N 是槽位号）。
+- 所有子页面（语言、启动设置、均衡器、帮助、关于、浏览、播放列表）都不再有底部页面按钮，只有播放主页保留 `X 设置`。
+- 流程：先把只编译的临时工作流 `dev-compile-check.yml` 随代码推到 main，编译通过后，在发版提交里把它删掉。
+
 ## 行为（读代码得出，未经真机验证）
 
 - 「浏览」从 `/music/` 开始（无则 `/`），只读进入的文件夹，仅认 `.mp3 .flac .wav .wave`，跳过隐藏项。按键：A 播放、Y 加入、X 添加全部、− 设为开机播放、B 返回。
@@ -70,6 +78,7 @@
 - `.github/workflows/build-and-release.yml`：push 到 main 且改动 `Makefile`、`DferTune/`、`common/`、`ipc/`、`overlay/` 等路径、且 `v<版本>` 标签不存在时，自动构建并发布。已加 `workflow_dispatch`（输入 `publish`，默认 false 仅构建上传产物），并设 `defaults.run.shell: bash -e {0}`（devkitpro 容器默认 sh 不支持 `[[ ]]`，否则读不到 release 说明文件）。
 - 提交信息带 `[skip ci]` 可避免自动发版。
 - release 正文来自 `.github/releases/v<版本>.md`。标签已存在时，手动触发 `publish=false` 的工作流（约 20–30 秒）会把该文件同步到现有 release。
+- 已发布 release `v5.6.0-dfer.4`（真正换行、默认列表循环、去掉播放列表数量和子页面底部按钮）。
 - 已发布 release `v5.6.0-dfer.2`（含后台模块修复与帮助/关于页）和 `v5.6.0-dfer.3`（界面加宽、标题换行、空目录原因提示；转换脚本只在仓库 `scripts/` 里，不在安装包内）。发布说明在 `.github/releases/v<版本>.md`。
 - 已发布 release `v5.6.0-dfer.1`（含 `DferTune.zip` 约 614KB、`DferTune-Overlay.ovl` 约 784KB，正文中文）；`v5.6.0-dfer.2` 的发布说明在 `.github/releases/v5.6.0-dfer.2.md`，推 main 后由工作流构建发布。
 - 仍未验证：真机运行（尤其 21.1.0）、Tesla 呼出组合键（文档写“常见为 L+↓+右摇杆按下”）、菜单名称「浏览/播放列表/设置」。

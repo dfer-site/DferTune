@@ -40,7 +40,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 APP_TITLE	:=	DferTune
 
 # Defaults for standalone `make -C overlay` (root Makefile exports these).
-VERSION		?=	5.6.0-dfer.3
+VERSION		?=	5.6.0-dfer.4
 API_VERSION	?=	8
 
 TARGET		:=	DferTune-Overlay
