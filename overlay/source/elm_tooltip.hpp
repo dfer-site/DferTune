@@ -2,6 +2,9 @@
 
 #include <tesla.hpp>
 #include <algorithm>
+#include <string>
+
+#include "elm_textwrap.hpp"
 
 /**
  * @brief Floating tooltip bubble for the focused row.
@@ -71,9 +74,19 @@ inline void draw(tsl::gfx::Renderer *renderer) {
     const s32 minY    = 100;            // below the title / clock header
     const s32 maxY    = screenH - 80;   // above the footer buttons
 
-    const auto dim = renderer->getTextDimensions(r.text, false, kFont, maxTextW);
-    const s32 w = dim.first  + 2 * kPadX;
-    const s32 h = dim.second + 2 * kPadY;
+    // drawString() never wraps by itself: break the text into lines once per text/width.
+    static std::string s_source, s_wrapped;
+    static s32 s_wrapWidth = 0, s_textW = 0, s_textH = 0;
+    if (s_wrapWidth != maxTextW || s_source != r.text) {
+        s_source    = r.text;
+        s_wrapWidth = maxTextW;
+        s_wrapped   = textwrap::wrapForRenderer(*renderer, s_source, kFont, maxTextW);
+        const auto dim = renderer->getTextDimensions(s_wrapped, false, kFont);
+        s_textW = dim.first;
+        s_textH = dim.second;
+    }
+    const s32 w = s_textW + 2 * kPadX;
+    const s32 h = s_textH + 2 * kPadY;
 
     s32 x = (screenW - w) / 2;
     x = std::max<s32>(8, std::min<s32>(x, screenW - w - 8));
@@ -91,8 +104,8 @@ inline void draw(tsl::gfx::Renderer *renderer) {
 
     renderer->drawRoundedRect(x - 1, y - 1, w + 2, h + 2, 9, border);
     renderer->drawRoundedRect(x, y, w, h, 8, fill);
-    renderer->drawString(r.text, false, x + kPadX, y + kPadY + static_cast<s32>(kFont) - 3,
-                         kFont, text, maxTextW);
+    renderer->drawString(s_wrapped, false, x + kPadX, y + kPadY + static_cast<s32>(kFont) - 3,
+                         kFont, text);
 }
 
 } // namespace tip

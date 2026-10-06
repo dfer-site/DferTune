@@ -388,7 +388,8 @@ LanguageGui::~LanguageGui() {
 
 tsl::elm::Element* LanguageGui::createUI() {
     i18n::syncFromConfig();
-    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/i18n::t(i18n::Str::Settings), /*pageRight=*/"");
+    // No footer page button on sub-pages: B goes back.
+    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
     m_list = new tsl::elm::List();
 
     addWrappedHeader(m_list,
@@ -524,8 +525,8 @@ StartupSettingsGui::~StartupSettingsGui() {
 
 tsl::elm::Element* StartupSettingsGui::createUI() {
     i18n::syncFromConfig();
-    m_frame = new SysTuneOverlayFrame(i18n::t(i18n::Str::Settings),
-                                      i18n::t(i18n::Str::StartupSettings));
+    // No footer page button on sub-pages: B goes back.
+    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
     m_list = new tsl::elm::List();
     addWrappedHeader(m_list,
         sectionTitle("Startup", "System events"));
@@ -710,8 +711,8 @@ void EqualizerGui::setBandGain(std::size_t band, int gain) {
 tsl::elm::Element* EqualizerGui::createUI() {
     blockShoulderJump.store(false, std::memory_order_release);
     i18n::syncFromConfig();
-    m_frame = new SysTuneOverlayFrame(
-        i18n::text("5-band EQ"), "");
+    // No footer page button on sub-pages: B goes back.
+    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
     m_list = new tsl::elm::List();
 
     if (R_FAILED(tuneGetEqualizerSettings(&m_settings)))

@@ -2,6 +2,8 @@
 
 #include <tesla.hpp>
 
+#include "elm_textwrap.hpp"
+
 #include <string>
 
 /**
@@ -18,14 +20,22 @@ public:
      *  @param focusable Pass false for a short note that must not take the cursor
      *                   (it then cannot be scrolled to, so keep it brief). */
     TextBlock(std::string heading, std::string body, s32 width, bool focusable = true)
-        : m_heading(std::move(heading))
-        , m_body(std::move(body))
-        , m_textWidth(width - 2 * kPadX)
+        : m_textWidth(width - 2 * kPadX)
     {
         m_isItem = focusable;
-        m_bodyTop = m_heading.empty() ? 10 : 44;
-        const s32 bodyHeight = tsl::gfx::Renderer::get()
-            .getTextDimensions(m_body, false, kBodyFont, m_textWidth).second;
+
+        // drawString() never wraps by itself, so break the text into lines here.
+        auto &renderer = tsl::gfx::Renderer::get();
+        m_heading = textwrap::wrapForRenderer(renderer, heading, kHeadFont, m_textWidth);
+        m_body    = textwrap::wrapForRenderer(renderer, body, kBodyFont, m_textWidth);
+
+        m_bodyTop = 10;
+        if (!m_heading.empty()) {
+            const s32 lines = renderer.getTextDimensions(m_heading, false, kHeadFont).second;
+            const s32 one   = renderer.getTextDimensions("A", false, kHeadFont).second;
+            m_bodyTop = 44 + (lines > one ? lines - one : 0);   // room for extra heading lines
+        }
+        const s32 bodyHeight = renderer.getTextDimensions(m_body, false, kBodyFont).second;
         m_height = m_bodyTop + bodyHeight + kPadBottom;
     }
 
@@ -57,7 +67,7 @@ public:
         if (!m_heading.empty())
             renderer->drawString(m_heading, false, x, y + 30, kHeadFont, a(tsl::onTextColor));
         renderer->drawString(m_body, false, x, y + m_bodyTop + kBodyFont - 2, kBodyFont,
-                             a(tsl::defaultTextColor), m_textWidth);
+                             a(tsl::defaultTextColor));
     }
 
 private:

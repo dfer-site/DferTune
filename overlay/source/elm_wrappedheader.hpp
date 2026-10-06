@@ -2,6 +2,8 @@
 
 #include <tesla.hpp>
 
+#include "elm_textwrap.hpp"
+
 #include <string>
 
 /**
@@ -27,7 +29,9 @@ public:
         m_wrapped = oneLine.first > m_textWidth;
         m_extra = 0;
         if (m_wrapped) {
-            const auto block = renderer.getTextDimensions(m_text, false, kFont, m_textWidth);
+            // drawString() never wraps by itself, so break the text into lines here.
+            m_text = textwrap::wrapForRenderer(renderer, m_text, kFont, m_textWidth);
+            const auto block = renderer.getTextDimensions(m_text, false, kFont);
             m_extra = block.second > oneLine.second ? block.second - oneLine.second : 0;
         }
         m_height = 33 + m_extra;
@@ -48,8 +52,7 @@ public:
                            aWithOpacity(tsl::headerSeparatorColor));
 
         if (m_wrapped) {
-            renderer->drawString(m_text, false, textX, textY, kFont,
-                                 tsl::headerTextColor, m_textWidth);
+            renderer->drawString(m_text, false, textX, textY, kFont, tsl::headerTextColor);
         } else {
             renderer->drawStringWithColoredSections(
                 m_text, false, tsl::s_dividerSpecialChars, textX, textY, kFont,
