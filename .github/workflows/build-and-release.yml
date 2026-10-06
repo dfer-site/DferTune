@@ -16,6 +16,13 @@ on:
       - 'scripts/verify-localizations.mjs'
       - 'scripts/verify-issue-38.mjs'
       - '.github/workflows/build-and-release.yml'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 是否创建标签并发布 release(默认只构建并上传构建产物)
+        required: false
+        type: boolean
+        default: false
 
 
 
@@ -232,7 +239,16 @@ jobs:
             } > .release-body.md
           fi
 
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: DferTune-${{ needs.check-version.outputs.new_version }}
+          path: |
+            DferTune.zip
+            overlay/DferTune-Overlay.ovl
+
       - name: 创建标签并发布
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.publish }}
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.check-version.outputs.new_version }}
