@@ -223,7 +223,7 @@ make dist
 
 ## 版本信息
 
-- **当前版本:** <!-- CURRENT_VERSION_START -->5.6.0-dfer.1<!-- CURRENT_VERSION_END -->
+- **当前版本:** <!-- CURRENT_VERSION_START -->5.6.0-dfer.2<!-- CURRENT_VERSION_END -->
 - **状态:** 稳定
 
 ## 许可证
