@@ -30,6 +30,11 @@ on:
 permissions:
   contents: write
 
+# devkitpro 容器默认使用 sh,不支持 [[ ]];统一改用 bash(保持与 sh -e 相同的错误处理)
+defaults:
+  run:
+    shell: bash -e {0}
+
 
 
 
