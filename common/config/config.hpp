@@ -142,7 +142,7 @@ auto is_tid_blacklisted(u64 tid) -> bool;
 void set_tid_blacklisted(u64 tid, bool value);
 auto is_title_allowed(u64 tid) -> bool;
 
-// overlay language; defaults to Russian ("ru") for fresh configs.
+// overlay language; defaults to Simplified Chinese ("zh-cn") for fresh configs; "en" is the only other language.
 void ensure_language_config();
 auto get_language(char* out, int max_len) -> int;
 void set_language(const char* language);

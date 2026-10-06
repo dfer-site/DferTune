@@ -12,23 +12,7 @@ import json
 from pathlib import Path
 
 LANG_DIR = Path("overlay/lang")
-REQUIRED_LANGUAGES = {
-    "de",
-    "en",
-    "es",
-    "fr",
-    "it",
-    "ja",
-    "ko",
-    "nl",
-    "pl",
-    "pt",
-    "ru",
-    "uk",
-    "zh",
-    "zh-cn",
-    "zh-tw",
-}
+REQUIRED_LANGUAGES = {"en", "zh-cn"}
 RUNTIME_ALIASES = {
     "Language",
     "Stop DferTune",
@@ -58,10 +42,10 @@ def main() -> None:
     if missing_files:
         raise SystemExit(f"Missing language files: {missing_files}")
 
-    base_keys = set(languages["ru"])
+    base_keys = set(languages["zh-cn"])
     missing_aliases = sorted(RUNTIME_ALIASES - base_keys)
     if missing_aliases:
-        raise SystemExit(f"ru.json missing runtime aliases: {missing_aliases}")
+        raise SystemExit(f"zh-cn.json missing runtime aliases: {missing_aliases}")
 
     for name, data in languages.items():
         keys = set(data)

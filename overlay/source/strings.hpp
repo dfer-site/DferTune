@@ -7,9 +7,6 @@ namespace i18n {
 
 void syncFromConfig();
 
-/** True after syncFromConfig() if the active overlay language is Russian. */
-bool isRu();
-
 enum class Str : std::uint8_t {
     Player,
     Settings,

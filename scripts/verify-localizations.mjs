@@ -12,83 +12,11 @@ const updateBuiltinFallbacks = process.argv.includes('--update-builtin-fallbacks
 const removeLibraryStyle = process.argv.includes('--remove-library-style');
 
 const issue38Translations = {
-  'de.json': {
-    WAIT_FOR_HOME: 'Auf HOME warten',
-    PAUSE_ON_KEYBOARD: 'Bei Bildschirmtastatur pausieren',
-    PAUSE_ON_CONTROLLER_SYNC: 'Bei Controller-Synchronisierung pausieren',
-    PAUSE_ON_LOCKSCREEN: 'Am Sperrbildschirm pausieren',
-  },
   'en.json': {
     WAIT_FOR_HOME: 'Wait For Home',
     PAUSE_ON_KEYBOARD: 'Pause On Keyboard',
     PAUSE_ON_CONTROLLER_SYNC: 'Pause On Controller Sync',
     PAUSE_ON_LOCKSCREEN: 'Pause On Lockscreen',
-  },
-  'es.json': {
-    WAIT_FOR_HOME: 'Esperar a HOME',
-    PAUSE_ON_KEYBOARD: 'Pausar con el teclado',
-    PAUSE_ON_CONTROLLER_SYNC: 'Pausar durante la sincronización del mando',
-    PAUSE_ON_LOCKSCREEN: 'Pausar en pantalla de bloqueo',
-  },
-  'fr.json': {
-    WAIT_FOR_HOME: 'Attendre HOME',
-    PAUSE_ON_KEYBOARD: 'Mettre en pause avec le clavier',
-    PAUSE_ON_CONTROLLER_SYNC: 'Mettre en pause pendant la synchronisation de la manette',
-    PAUSE_ON_LOCKSCREEN: 'Mettre en pause à l’écran verrouillé',
-  },
-  'it.json': {
-    WAIT_FOR_HOME: 'Attendi HOME',
-    PAUSE_ON_KEYBOARD: 'Pausa con la tastiera',
-    PAUSE_ON_CONTROLLER_SYNC: 'Pausa durante la sincronizzazione del controller',
-    PAUSE_ON_LOCKSCREEN: 'Pausa nella schermata di blocco',
-  },
-  'ja.json': {
-    WAIT_FOR_HOME: 'HOMEまで待機',
-    PAUSE_ON_KEYBOARD: 'キーボードで一時停止',
-    PAUSE_ON_CONTROLLER_SYNC: 'コントローラー同期中に一時停止',
-    PAUSE_ON_LOCKSCREEN: 'ロック画面で一時停止',
-  },
-  'ko.json': {
-    WAIT_FOR_HOME: 'HOME까지 대기',
-    PAUSE_ON_KEYBOARD: '키보드에서 일시 정지',
-    PAUSE_ON_CONTROLLER_SYNC: '컨트롤러 동기화 중 일시 정지',
-    PAUSE_ON_LOCKSCREEN: '잠금 화면에서 일시 정지',
-  },
-  'nl.json': {
-    WAIT_FOR_HOME: 'Wachten op HOME',
-    PAUSE_ON_KEYBOARD: 'Pauzeren bij toetsenbord',
-    PAUSE_ON_CONTROLLER_SYNC: 'Pauzeren bij controllersynchronisatie',
-    PAUSE_ON_LOCKSCREEN: 'Pauzeren op vergrendelscherm',
-  },
-  'pl.json': {
-    WAIT_FOR_HOME: 'Czekaj na HOME',
-    PAUSE_ON_KEYBOARD: 'Wstrzymaj przy klawiaturze',
-    PAUSE_ON_CONTROLLER_SYNC: 'Wstrzymaj podczas synchronizacji kontrolera',
-    PAUSE_ON_LOCKSCREEN: 'Wstrzymaj na ekranie blokady',
-  },
-  'pt.json': {
-    WAIT_FOR_HOME: 'Aguardar HOME',
-    PAUSE_ON_KEYBOARD: 'Pausar com teclado',
-    PAUSE_ON_CONTROLLER_SYNC: 'Pausar durante a sincronização do controle',
-    PAUSE_ON_LOCKSCREEN: 'Pausar na tela de bloqueio',
-  },
-  'ru.json': {
-    WAIT_FOR_HOME: 'Ждать HOME',
-    PAUSE_ON_KEYBOARD: 'Пауза на клавиатуре',
-    PAUSE_ON_CONTROLLER_SYNC: 'Пауза при синхронизации контроллера',
-    PAUSE_ON_LOCKSCREEN: 'Пауза на локскрине',
-  },
-  'uk.json': {
-    WAIT_FOR_HOME: 'Чекати HOME',
-    PAUSE_ON_KEYBOARD: 'Пауза на клавіатурі',
-    PAUSE_ON_CONTROLLER_SYNC: 'Пауза під час синхронізації контролера',
-    PAUSE_ON_LOCKSCREEN: 'Пауза на екрані блокування',
-  },
-  'zh.json': {
-    WAIT_FOR_HOME: '等待 HOME',
-    PAUSE_ON_KEYBOARD: '键盘时暂停',
-    PAUSE_ON_CONTROLLER_SYNC: '控制器同步时暂停',
-    PAUSE_ON_LOCKSCREEN: '锁屏时暂停',
   },
   'zh-cn.json': {
     WAIT_FOR_HOME: '等待 HOME',
@@ -96,30 +24,11 @@ const issue38Translations = {
     PAUSE_ON_CONTROLLER_SYNC: '控制器同步时暂停',
     PAUSE_ON_LOCKSCREEN: '锁屏时暂停',
   },
-  'zh-tw.json': {
-    WAIT_FOR_HOME: '等待 HOME',
-    PAUSE_ON_KEYBOARD: '使用鍵盤時暫停',
-    PAUSE_ON_CONTROLLER_SYNC: '控制器同步時暫停',
-    PAUSE_ON_LOCKSCREEN: '鎖定畫面時暫停',
-  },
 };
 
 const startupScreenTranslations = {
-  'de.json': { STARTUP_SETTINGS: 'Starteinstellungen' },
   'en.json': { STARTUP_SETTINGS: 'Startup Settings' },
-  'es.json': { STARTUP_SETTINGS: 'Ajustes de inicio' },
-  'fr.json': { STARTUP_SETTINGS: 'Paramètres de démarrage' },
-  'it.json': { STARTUP_SETTINGS: 'Impostazioni di avvio' },
-  'ja.json': { STARTUP_SETTINGS: '起動設定' },
-  'ko.json': { STARTUP_SETTINGS: '시작 설정' },
-  'nl.json': { STARTUP_SETTINGS: 'Opstartinstellingen' },
-  'pl.json': { STARTUP_SETTINGS: 'Ustawienia uruchamiania' },
-  'pt.json': { STARTUP_SETTINGS: 'Configurações de inicialização' },
-  'ru.json': { STARTUP_SETTINGS: 'Настройки запуска' },
-  'uk.json': { STARTUP_SETTINGS: 'Налаштування запуску' },
-  'zh.json': { STARTUP_SETTINGS: '启动设置' },
   'zh-cn.json': { STARTUP_SETTINGS: '启动设置' },
-  'zh-tw.json': { STARTUP_SETTINGS: '啟動設定' },
 };
 
 const phraseKeys = {
@@ -131,35 +40,11 @@ const phraseKeys = {
 };
 
 const builtinLocaleTables = {
-  'de.json': 'kDe',
-  'es.json': 'kEs',
-  'fr.json': 'kFr',
-  'it.json': 'kIt',
-  'ja.json': 'kJa',
-  'ko.json': 'kKo',
-  'nl.json': 'kNl',
-  'pl.json': 'kPl',
-  'pt.json': 'kPt',
-  'uk.json': 'kUk',
-  'zh.json': 'kZh',
   'zh-cn.json': 'kZhCn',
-  'zh-tw.json': 'kZhTw',
 };
 
 const addAllTranslations = {
-  'de.json': 'Alle hinzufügen',
-  'es.json': 'Añadir todo',
-  'fr.json': 'Tout ajouter',
-  'it.json': 'Aggiungi tutto',
-  'ja.json': 'すべて追加',
-  'ko.json': '모두 추가',
-  'nl.json': 'Alles toevoegen',
-  'pl.json': 'Dodaj wszystko',
-  'pt.json': 'Adicionar tudo',
-  'uk.json': 'Додати все',
-  'zh.json': '添加全部',
   'zh-cn.json': '添加全部',
-  'zh-tw.json': '新增全部',
 };
 
 const files = fs.readdirSync(localeDir).filter((file) => file.endsWith('.json')).sort();
@@ -173,7 +58,7 @@ if (!pairsMatch) {
 }
 
 const uiStringKeys = pairsMatch
-  ? [...pairsMatch[1].matchAll(/\{\"((?:\\.|[^\"])*)\",\s*\"/g)].map((match) => JSON.parse(`\"${match[1]}\"`))
+  ? [...pairsMatch[1].matchAll(/\{\"((?:\\.|[^\"])*)\"\}/g)].map((match) => JSON.parse(`\"${match[1]}\"`))
   : [];
 
 if (uiStringKeys.length === 0) {
