@@ -18,16 +18,16 @@
 #define VERSION "dev"
 #endif
 
-void reloadRyazhTuneTranslations() {
+void reloadDferTuneTranslations() {
     char lang[16]{};
     config::get_language(lang, sizeof(lang));
     if (lang[0] == '\0')
-        std::strncpy(lang, "ru", sizeof(lang) - 1);
+        std::strncpy(lang, "zh-cn", sizeof(lang) - 1);
 
     ult::clearTranslationCache();
 
     const std::array<std::string, 2> langRoots = {
-        std::string("/config/RyazhTune/"),
+        std::string("/config/DferTune/"),
         std::string(UI_OVERRIDE_PATH),
     };
 
@@ -53,7 +53,7 @@ void reloadRyazhTuneTranslations() {
 }
 
 void maybeShowOverlayWhatsNew() {
-    constexpr const char *kPath = "/config/RyazhTune/overlay_seen_version.txt";
+    constexpr const char *kPath = "/config/DferTune/overlay_seen_version.txt";
 
     char buf[128]{};
     if (FILE *f = fopen(kPath, "r")) {

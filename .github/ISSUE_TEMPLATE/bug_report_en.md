@@ -11,7 +11,7 @@ assignees: ''
 A clear and concise description of the problem.
 
 **Environment**
-- RyazhTune version:
+- DferTune version:
 - System firmware (HOS) version:
 - Atmosphere version:
 - Audio format in use (codec, bitrate):

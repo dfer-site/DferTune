@@ -54,7 +54,7 @@ typedef struct {
 #define TUNE_EQUALIZER_TARGET_MUSIC 0
 #define TUNE_EQUALIZER_TARGET_SYSTEM 1
 
-/** Five-band EQ snapshot. Target selects RyazhTune music or system/game output. */
+/** Five-band EQ snapshot. Target selects DferTune music or system/game output. */
 typedef struct {
     u8 enabled;
     u8 target;

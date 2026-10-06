@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate RyazhTune overlay language JSON files.
+"""Validate DferTune overlay language JSON files.
 
 The overlay is translated by libryazhahand at runtime, so every language file
 must contain both the symbolic keys used by older code and the literal strings
@@ -31,8 +31,8 @@ REQUIRED_LANGUAGES = {
 }
 RUNTIME_ALIASES = {
     "Language",
-    "Stop RyazhTune",
-    "RyazhTune ♫",
+    "Stop DferTune",
+    "DferTune ♫",
     "Music Library",
     "Volume ⊘ \ue0e3 Toggle Mute",
     "No startup path set in config.",

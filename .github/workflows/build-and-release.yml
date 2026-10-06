@@ -1,4 +1,4 @@
-name: "Автоматическая сборка и релиз RyazhTune"
+name: "Автоматическая сборка и релиз DferTune"
 
 
 
@@ -9,7 +9,7 @@ on:
       - main
     paths:
       - 'Makefile'
-      - 'RyazhTune/**'
+      - 'DferTune/**'
       - 'common/**'
       - 'ipc/**'
       - 'overlay/**'
@@ -134,7 +134,7 @@ jobs:
 
       - name: Проверка целостности сборки
         run: |
-          if [ -f "RyazhTune/RyazhTune.nsp" ] && [ -f "overlay/RyazhTune-Overlay.ovl" ]; then
+          if [ -f "DferTune/DferTune.nsp" ] && [ -f "overlay/DferTune-Overlay.ovl" ]; then
             echo "Сборка успешно завершена."
           else
             echo "Ошибка: Файлы сборки не найдены!"
@@ -142,28 +142,28 @@ jobs:
             exit 1
           fi
 
-      - name: Подготовка архива RyazhTune.zip
+      - name: Подготовка архива DferTune.zip
         run: |
-          mkdir -p release/atmosphere/contents/420000000000000E/flags
-          mkdir -p release/config/RyazhTune
+          mkdir -p release/atmosphere/contents/420000000000000F/flags
+          mkdir -p release/config/DferTune
           mkdir -p release/switch/.overlays
 
           # 1. Атмосфера (модуль)
-          touch release/atmosphere/contents/420000000000000E/flags/boot2.flag
-          cp RyazhTune/RyazhTune.nsp release/atmosphere/contents/420000000000000E/exefs.nsp
-          cp RyazhTune/toolbox.json release/atmosphere/contents/420000000000000E/
+          touch release/atmosphere/contents/420000000000000F/flags/boot2.flag
+          cp DferTune/DferTune.nsp release/atmosphere/contents/420000000000000F/exefs.nsp
+          cp DferTune/toolbox.json release/atmosphere/contents/420000000000000F/
 
           # 2. Конфиги и языки
           if [ -d "overlay/lang" ]; then
-            cp -r overlay/lang release/config/RyazhTune/
+            cp -r overlay/lang release/config/DferTune/
           fi
-          cp .github/default-config.ini release/config/RyazhTune/config.ini
+          cp .github/default-config.ini release/config/DferTune/config.ini
 
           # 3. Оверлей
-          cp overlay/RyazhTune-Overlay.ovl release/switch/.overlays/
+          cp overlay/DferTune-Overlay.ovl release/switch/.overlays/
 
           # Упаковка
-          cd release && zip -r ../RyazhTune.zip . && cd ..
+          cd release && zip -r ../DferTune.zip . && cd ..
 
       - name: Формирование текста релиза
         id: changelog
@@ -236,10 +236,10 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.check-version.outputs.new_version }}
-          name: RyazhTune v${{ needs.check-version.outputs.new_version }}
+          name: DferTune v${{ needs.check-version.outputs.new_version }}
           files: |
-            RyazhTune.zip
-            overlay/RyazhTune-Overlay.ovl
+            DferTune.zip
+            overlay/DferTune-Overlay.ovl
           body_path: .release-body.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

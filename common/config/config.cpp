@@ -10,8 +10,8 @@ namespace config {
 
 namespace {
 
-const char CONFIG_DIR[]{"/config/RyazhTune"};
-const char CONFIG_PATH[]{"/config/RyazhTune/config.ini"};
+const char CONFIG_DIR[]{"/config/DferTune"};
+const char CONFIG_PATH[]{"/config/DferTune/config.ini"};
 constexpr const char* EQ_GAIN_KEYS[TUNE_EQUALIZER_BAND_COUNT] = {
     "gain_80_hz", "gain_250_hz", "gain_1_khz", "gain_4_khz", "gain_12_khz",
 };
@@ -395,7 +395,7 @@ void ensure_language_config() {
     ini_gets("config", "language", "", language, sizeof(language), CONFIG_PATH);
 
     if (language[0] == '\0')
-        std::snprintf(language, sizeof(language), "%s", "ru");
+        std::snprintf(language, sizeof(language), "%s", "zh-cn");
 
     ini_puts("config", "language", language, CONFIG_PATH);
 }
@@ -406,7 +406,7 @@ auto get_language(char* out, int max_len) -> int {
         return len;
 
     ensure_language_config();
-    return ini_gets("config", "language", "ru", out, max_len, CONFIG_PATH);
+    return ini_gets("config", "language", "zh-cn", out, max_len, CONFIG_PATH);
 }
 
 void set_language(const char* language) {

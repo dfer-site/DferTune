@@ -50,15 +50,15 @@ namespace {
 
     // ---- Persistence paths ---------------------------------------------
 
-    constexpr const char* kSavedFile = "/config/RyazhTune/saved_playlist.txt";
-    constexpr const char* kStateFile = "/config/RyazhTune/play_source.txt";
-    constexpr const char* kActivePlaylistFile = "/config/RyazhTune/active_playlist.txt";
+    constexpr const char* kSavedFile = "/config/DferTune/saved_playlist.txt";
+    constexpr const char* kStateFile = "/config/DferTune/play_source.txt";
+    constexpr const char* kActivePlaylistFile = "/config/DferTune/active_playlist.txt";
 
     // ---- Disk helpers --------------------------------------------------
 
     std::string savedPathFor(u32 idx) {
         char path[FS_MAX_PATH] = {};
-        std::snprintf(path, sizeof(path), "/config/RyazhTune/saved_playlist_%u.txt",
+        std::snprintf(path, sizeof(path), "/config/DferTune/saved_playlist_%u.txt",
                       static_cast<unsigned>(idx + 1));
         return path;
     }

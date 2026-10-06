@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Скрипт автоматизации настройки окружения и сборки Horizon-OC
-# Основано на предоставленных инструкциях для RyazhTune v5.0.0
+# Основано на предоставленных инструкциях для DferTune v5.0.0
 
 set -e
 
@@ -29,13 +29,13 @@ echo "Интеграция файлов Atmosphere..."
 cp -r Atmosphere/* Horizon-OC/build/
 
 # 5. Патчинг исходников (ldr_process_creation.cpp)
-# Предполагается, что в RyazhTune есть папка Source с необходимым патчем
-if [ -d "RyazhaTune/source" ]; then
+# Предполагается, что в DferTune есть папка Source с необходимым патчем
+if [ -d "DferTune/source" ]; then
     echo "Применение патча ldr_process_creation.cpp..."
     # Путь в инструкциях: Source/Atmosphere/stratosphere/loader/source/ldr_process_creation.cpp
     # Мы адаптируем это под структуру нашего репозитория, если патч там присутствует
     # В данном случае, мы просто создаем структуру, если патча нет, выводим предупреждение
-    PATCH_PATH="RyazhaTune/source/Atmosphere/stratosphere/loader/source/ldr_process_creation.cpp"
+    PATCH_PATH="DferTune/source/Atmosphere/stratosphere/loader/source/ldr_process_creation.cpp"
     if [ -f "$PATCH_PATH" ]; then
         cp "$PATCH_PATH" Horizon-OC/build/stratosphere/loader/source/ldr_process_creation.cpp
     else

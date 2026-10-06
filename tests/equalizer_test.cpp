@@ -1,4 +1,4 @@
-#include "../RyazhTune/source/impl/equalizer.hpp"
+#include "../DferTune/source/impl/equalizer.hpp"
 
 #include <algorithm>
 #include <array>

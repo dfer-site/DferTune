@@ -47,7 +47,7 @@ class SysTuneOverlay final : public tsl::Overlay {
         if (R_VALUE(rc) == KERNELRESULT(NotFound) || R_VALUE(rc) == KERNELRESULT(ConnectionRefused)) {
             u64 pid = 0;
             const NcmProgramLocation programLocation{
-                .program_id = 0x420000000000000E,
+                .program_id = 0x420000000000000F,
                 .storageID  = NcmStorageId_None,
             };
             rc = pmshellInitialize();
@@ -105,7 +105,7 @@ class SysTuneOverlay final : public tsl::Overlay {
         }
 
         config::ensure_language_config();
-        reloadRyazhTuneTranslations();
+        reloadDferTuneTranslations();
         i18n::syncFromConfig();
 
         u32 api = 0;
@@ -142,7 +142,7 @@ class SysTuneOverlay final : public tsl::Overlay {
             /* Relaunch the sysmodule. */
             u64 pid = 0;
             const NcmProgramLocation programLocation{
-                .program_id = 0x420000000000000E,
+                .program_id = 0x420000000000000F,
                 .storageID  = NcmStorageId_None,
             };
             rc = pmshellInitialize();
@@ -180,7 +180,7 @@ class SysTuneOverlay final : public tsl::Overlay {
             api = 0;
             if (R_FAILED(tuneGetApiVersion(&api)) || api != TUNE_API_VERSION) {
                 this->msg = "   Unsupported\n"
-                            "RyazhTune version!";
+                            "DferTune version!";
             }
         }
     }

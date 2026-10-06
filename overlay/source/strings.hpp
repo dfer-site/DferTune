@@ -41,7 +41,7 @@ enum class Str : std::uint8_t {
     PauseOnControllerSync,
     PauseOnLockscreen,
     RemoveStartup,
-    StopRyazhTune,
+    StopDferTune,
     On,
     Off,
     Pass,

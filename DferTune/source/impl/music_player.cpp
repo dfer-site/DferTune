@@ -359,7 +359,7 @@ namespace tune::impl {
          * lifecycle. We use it to drive HOME-aware pause/play policy.
          *
          * Credit: masagrator (SaltyNX) posted this approach in the
-         * RyazhTune GitHub discussion. The cache avoids re-reading the
+         * DferTune GitHub discussion. The cache avoids re-reading the
          * event log on every 10 ms tick — the event-count check is cheap
          * (one IPC round-trip, returns counters) and only when the count
          * increments do we pull the latest 16 events. The event log on
@@ -1365,7 +1365,7 @@ namespace tune::impl {
         int  s_retry_ticks      = 0;
         int  s_transition_ticks = 0;
 
-        /* Immediately write RyazhTune's per-title master volume to the
+        /* Immediately write DferTune's per-title master volume to the
          * foreground game process.  Called at the TOP of each focus
          * transition branch, BEFORE any blocking fadeIn/fadeOut, so the
          * game audio correction and the music fade start simultaneously.
@@ -1722,7 +1722,7 @@ namespace tune::impl {
                              *       Writing our per-title level on top of that
                              *       races with — and undoes — that suppress,
                              *       making the game audio briefly audible at the
-                             *       RyazhTune level during the HOME transition.
+                             *       DferTune level during the HOME transition.
                              *
                              *   (2) The Switch resets audproc during the RESUME
                              *       sequence (not the suspend), so any write here
@@ -2033,7 +2033,7 @@ namespace tune::impl {
              *       system, producing the brief full-volume flash.  Writing
              *       every 10 ms for 300 ms means any system reset is corrected
              *       within one tick — imperceptible to the user.
-             *       Outside this window RyazhTune is event-driven and never
+             *       Outside this window DferTune is event-driven and never
              *       writes in steady state, so UltraGB cooperation is intact.
              */
             if (current_pid) {
@@ -2101,7 +2101,7 @@ namespace tune::impl {
                  * 1.0 sticks indefinitely.
                  *
                  * Every ~5 s in steady state, read the current audproc value.
-                 * If it is at the system default of 1.0 AND RyazhTune's
+                 * If it is at the system default of 1.0 AND DferTune's
                  * configured level for this title is something other than 1.0,
                  * the delta is unambiguously a system reset (UltraGB would
                  * never write 1.0 intentionally).  Trigger a one-shot

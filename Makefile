@@ -16,11 +16,11 @@ RYAZHAHAND_DIR     ?= overlay/lib/libryazhahand
 all: overlay nxExt module
 
 clean:
-	$(MAKE) -C RyazhTune/nxExt clean
+	$(MAKE) -C DferTune/nxExt clean
 	$(MAKE) -C overlay clean
-	$(MAKE) -C RyazhTune clean
+	$(MAKE) -C DferTune clean
 	-rm -r dist
-	-rm RyazhTune-*-*.zip
+	-rm DferTune-*-*.zip
 
 prepare-overlay-lib:
 	@if [ ! -d "$(RYAZHAHAND_DIR)/.git" ]; then \
@@ -41,22 +41,22 @@ overlay: prepare-overlay-lib
 	$(MAKE) -C overlay
 
 nxExt:
-	$(MAKE) -C RyazhTune/nxExt
+	$(MAKE) -C DferTune/nxExt
 
 module: nxExt
-	$(MAKE) -C RyazhTune
+	$(MAKE) -C DferTune
 
 dist: all
 	rm -rf dist
 	mkdir -p dist/switch/.overlays
-		mkdir -p dist/atmosphere/contents/420000000000000E/flags
-			mkdir -p dist/config/RyazhTune/lang
-			touch dist/atmosphere/contents/420000000000000E/flags/boot2.flag
-			cp RyazhTune/RyazhTune.nsp dist/atmosphere/contents/420000000000000E/exefs.nsp
-			cp overlay/RyazhTune-Overlay.ovl dist/switch/.overlays/
-			cp overlay/lang/*.json dist/config/RyazhTune/lang/
-		cp RyazhTune/toolbox.json dist/atmosphere/contents/420000000000000E/
-	cd dist; zip -r RyazhTune-$(VERSION)-$(GITHASH).zip ./**/; cd ../;
-	-hactool -t nso RyazhTune/RyazhTune.nso
+		mkdir -p dist/atmosphere/contents/420000000000000F/flags
+			mkdir -p dist/config/DferTune/lang
+			touch dist/atmosphere/contents/420000000000000F/flags/boot2.flag
+			cp DferTune/DferTune.nsp dist/atmosphere/contents/420000000000000F/exefs.nsp
+			cp overlay/DferTune-Overlay.ovl dist/switch/.overlays/
+			cp overlay/lang/*.json dist/config/DferTune/lang/
+		cp DferTune/toolbox.json dist/atmosphere/contents/420000000000000F/
+	cd dist; zip -r DferTune-$(VERSION)-$(GITHASH).zip ./**/; cd ../;
+	-hactool -t nso DferTune/DferTune.nso
 
 .PHONY: all clean overlay nxExt module dist prepare-overlay-lib

@@ -17,12 +17,12 @@
 //              on-disk, untouched by folder playback.
 //
 // Persistence:
-//   /config/RyazhTune/saved_playlist_N.txt — one absolute path per line per slot
-//   /config/RyazhTune/active_playlist.txt  — current 0-based slot index
-//   /config/RyazhTune/play_source.txt      — "Playlist" | "Folder:<path>"
+//   /config/DferTune/saved_playlist_N.txt — one absolute path per line per slot
+//   /config/DferTune/active_playlist.txt  — current 0-based slot index
+//   /config/DferTune/play_source.txt      — "Playlist" | "Folder:<path>"
 //
 //   These files are updated on every mutation so state survives overlay
-//   close/reopen while the RyazhTune background service keeps running.
+//   close/reopen while the DferTune background service keeps running.
 //
 // Thread safety: all callers run on the Tesla UI thread — no locking needed.
 // =============================================================================

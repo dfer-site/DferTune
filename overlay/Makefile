@@ -37,13 +37,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-APP_TITLE	:=	RyazhTune
+APP_TITLE	:=	DferTune
 
 # Defaults for standalone `make -C overlay` (root Makefile exports these).
 VERSION		?=	5.6.0
 API_VERSION	?=	8
 
-TARGET		:=	RyazhTune-Overlay
+TARGET		:=	DferTune-Overlay
 BUILD		:=	build
 SOURCES		:=	source ../ipc ../common/minIni ../common/sdmc ../common/config ../common/pm ../common/aud
 DATA		:=	data
@@ -245,7 +245,7 @@ $(OUTPUT).ovl		:	$(OUTPUT).elf $(OUTPUT).nacp
 	@elf2nro $< $@ $(NROFLAGS)
 	@echo "built ... $(notdir $(OUTPUT).ovl)"
 		@printf 'RYAZ' >> $@
-			@echo "RyazhTune signature has been added."
+			@echo "DferTune signature has been added."
 
 $(OUTPUT).elf	:	$(OFILES)
 

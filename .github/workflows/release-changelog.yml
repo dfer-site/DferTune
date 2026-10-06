@@ -52,7 +52,7 @@ jobs:
           RAW_LOG=$(git log "$RANGE" --no-merges --pretty=format:"%s" | grep -Evi "^merge|update workflow|fix yaml" | head -n 40)
 
           if [[ -n "${OPENROUTER_API_KEY}" && -n "$RAW_LOG" ]]; then
-            PROMPT="Ты — release-manager проекта RyazhTune. Напиши релиз-ноты на русском языке в markdown.
+            PROMPT="Ты — release-manager проекта DferTune. Напиши релиз-ноты на русском языке в markdown.
             Формат и правила:
             1) Короткое вступление (1-2 предложения).
             2) Разделы по порядку (добавляй только релевантные):
@@ -113,7 +113,7 @@ jobs:
           else
             {
               echo "RELEASE_BODY<<EOF"
-              echo "👋 Привет! Готово новое обновление RyazhTune."
+              echo "👋 Привет! Готово новое обновление DferTune."
               echo
               echo "$CHANGELOG_SECTIONS"
               echo
@@ -121,7 +121,7 @@ jobs:
               echo "- Релиз собран и упакован автоматически."
               echo "- Описание собрано из фактических изменений кода за диапазон релиза."
               echo
-              echo "Спасибо за использование RyazhTune! 🎧"
+              echo "Спасибо за использование DferTune! 🎧"
               echo "EOF"
             } >> "$GITHUB_ENV"
           fi

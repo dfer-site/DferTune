@@ -33,7 +33,7 @@ static std::string     g_browser_return_root;
 // Volume mute-backup persistence
 // Three integers (0-100), one per line: Music, Game, Game (default).
 // ---------------------------------------------------------------------------
-static constexpr const char* kVolBackupFile = "/config/RyazhTune/volume_backup.txt";
+static constexpr const char* kVolBackupFile = "/config/DferTune/volume_backup.txt";
 
 static void readVolBackups(u8 &music, u8 &game, u8 &game_def) {
     music = game = game_def = 100;
@@ -243,7 +243,7 @@ static void pushBrowserStack() {
 MainGui::MainGui() {
     i18n::syncFromConfig();
     // Initialise play context once on overlay open.
-    // Loads persisted state from /config/RyazhTune/ and snapshots IPC on first run.
+    // Loads persisted state from /config/DferTune/ and snapshots IPC on first run.
     play_ctx::init();
 
     m_status_bar = new StatusBar();
@@ -442,7 +442,7 @@ tsl::elm::Element* LanguageGui::createUI() {
         item->setClickListener([i](u64 keys) -> bool {
             if (keys & HidNpadButton_A) {
                 config::set_language(kLanguages[i].code);
-                reloadRyazhTuneTranslations();
+                reloadDferTuneTranslations();
                 i18n::syncFromConfig();
                 const std::string body =
                     std::string(i18n::t(i18n::Str::LanguageAppliedBody)) + "\n\n" +
@@ -1253,7 +1253,7 @@ tsl::elm::Element* SettingsGui::createUI() {
     });
     m_list->addItem(startup_settings);
 
-    auto exit_button = new tsl::elm::CompactSilentListItem(i18n::t(i18n::Str::StopRyazhTune));
+    auto exit_button = new tsl::elm::CompactSilentListItem(i18n::t(i18n::Str::StopDferTune));
     exit_button->setValue("\uE071", true);
     exit_button->setClickListener([exit_button](u64 keys) -> bool {
         if (keys & HidNpadButton_A) {

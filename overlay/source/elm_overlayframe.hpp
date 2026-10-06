@@ -7,7 +7,7 @@
 #include <string>
 
 /**
- * @brief Base frame for RyazhTune overlay pages.
+ * @brief Base frame for DferTune overlay pages.
  *
  * Content pointer is NON-OWNING — MainGui owns both page lists and
  * deletes them in its destructor.
@@ -224,7 +224,7 @@ private:
         std::string scrollText;
     };
 
-    static constexpr const char *TITLE = "RyazhTune \u266B";
+    static constexpr const char *TITLE = "DferTune \u266B";
 
     void calcScrollWidth(tsl::gfx::Renderer *renderer, ScrollState &s,
                          const char *text, u32 fontSize, bool widgetDrawn) {

@@ -11,14 +11,14 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'u
 const sources = {
   configHeader: read('common/config/config.hpp'),
   configSource: read('common/config/config.cpp'),
-  player: read('RyazhTune/source/impl/music_player.cpp'),
+  player: read('DferTune/source/impl/music_player.cpp'),
   gui: read('overlay/source/gui_main.cpp'),
   stringsHeader: read('overlay/source/strings.hpp'),
   stringsSource: read('overlay/source/strings.cpp'),
   ipcCommands: read('ipc/ipc_cmd.h'),
   ipcHeader: read('ipc/tune.h'),
   ipcClient: read('ipc/tune.c'),
-  service: read('RyazhTune/source/tune_service.cpp'),
+  service: read('DferTune/source/tune_service.cpp'),
   overlayMakefile: read('overlay/Makefile'),
 };
 
@@ -73,9 +73,9 @@ for (const obsoleteDirectSetter of [
 }
 
 for (const [name, source] of [
-  ['RyazhaTune config', sources.configHeader],
-  ['RyazhaTune config implementation', sources.configSource],
-  ['RyazhaTune GUI', sources.gui],
+  ['DferTune config', sources.configHeader],
+  ['DferTune config implementation', sources.configSource],
+  ['DferTune GUI', sources.gui],
 ]) {
   if (source.includes('switch_2_style') || source.includes('useSwitch2Style') || source.includes('Switch2Style'))
     failures.push(`${name} still owns shared libryazhahand Switch 2 style`);

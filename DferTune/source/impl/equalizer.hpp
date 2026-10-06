@@ -17,7 +17,7 @@ struct EqualizerSettings {
 };
 
 /**
- * Five-band stereo equalizer for RyazhTune's 48 kHz interleaved PCM stream.
+ * Five-band stereo equalizer for DferTune's 48 kHz interleaved PCM stream.
  *
  * The implementation is deliberately independent from hardware-codec EQ
  * projects. It uses RBJ-style biquads in transposed direct-form II, smooths

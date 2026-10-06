@@ -9,8 +9,8 @@ const tuner = fs.readFileSync('overlay/source/elm_equalizer.cpp', 'utf8');
 const tunerHeader = fs.readFileSync('overlay/source/elm_equalizer.hpp', 'utf8');
 const commands = fs.readFileSync('ipc/ipc_cmd.h', 'utf8');
 const tuneHeader = fs.readFileSync('ipc/tune.h', 'utf8');
-const codec = fs.readFileSync('RyazhTune/source/impl/codec_equalizer.cpp', 'utf8');
-const player = fs.readFileSync('RyazhTune/source/impl/music_player.cpp', 'utf8');
+const codec = fs.readFileSync('DferTune/source/impl/codec_equalizer.cpp', 'utf8');
+const player = fs.readFileSync('DferTune/source/impl/music_player.cpp', 'utf8');
 const makefile = fs.readFileSync('Makefile', 'utf8');
 const tesla = fs.readFileSync('overlay/lib/libryazhahand/libtesla/include/tesla.hpp', 'utf8');
 

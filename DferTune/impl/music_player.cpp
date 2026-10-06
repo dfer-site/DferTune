@@ -295,7 +295,7 @@ namespace tune::impl {
          * lifecycle. We use it to drive HOME-aware pause/play policy.
          *
          * Credit: masagrator (SaltyNX) posted this approach in the
-         * RyazhTune GitHub discussion. The cache avoids re-reading the
+         * DferTune GitHub discussion. The cache avoids re-reading the
          * event log on every 10 ms tick — the event-count check is cheap
          * (one IPC round-trip, returns counters) and only when the count
          * increments do we pull the latest 16 events. The event log on

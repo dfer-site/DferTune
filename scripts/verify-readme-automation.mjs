@@ -26,8 +26,8 @@ if (version !== makefileVersion) {
 }
 
 const requiredBadges = [
-  'img.shields.io/github/downloads/Dimasick-git/RyazhaTune/total',
-  'visitor-badge.laobi.icu/badge?page_id=Dimasick-git.RyazhaTune',
+  'img.shields.io/github/downloads/dfer-site/DferTune/total',
+  'visitor-badge.laobi.icu/badge?page_id=dfer-site.DferTune',
 ];
 
 for (const badge of requiredBadges) {
