@@ -818,14 +818,20 @@ SettingsGui::~SettingsGui() {
 }
 
 // ---------------------------------------------------------------------------
-void SettingsGui::refreshPlaylistCount(u32 count) {
+namespace {
+    // The Playlist row shows a "playing" marker while music plays from the
+    // playlist, and the usual arrow otherwise. It deliberately does NOT show a
+    // song count: the count was not reliable enough to display.
+    std::string playlistRowValue() {
+        const bool playing = (play_ctx::source() == play_ctx::Source::Playlist)
+                          && (play_ctx::currentPath()[0] != '\0');
+        return playing ? ult::INPROGRESS_SYMBOL : ult::DROPDOWN_SYMBOL;
+    }
+}
+
+void SettingsGui::refreshPlaylistCount(u32 /*count*/) {
     if (!m_queue_button) return;
-    m_last_count = count;
-    /* Don't clobber the INPROGRESS_SYMBOL that update() manages. */
-    const bool playlistActive = (play_ctx::source() == play_ctx::Source::Playlist)
-                              && (play_ctx::currentPath()[0] != '\0');
-    if (!playlistActive)
-        m_queue_button->setValue(i18n::trackCountLabel(count));
+    m_queue_button->setValue(playlistRowValue());
 }
 
 // ---------------------------------------------------------------------------
@@ -858,14 +864,7 @@ tsl::elm::Element* SettingsGui::createUI() {
     const bool init_inFolder   = (play_ctx::source() == play_ctx::Source::Folder);
     const bool init_hasTrack   = (play_ctx::currentPath()[0] != '\0');
 
-    {
-        const u32 count = play_ctx::savedPlaylistSize();
-        m_last_count    = count;
-        const std::string queueVal = (init_inPlaylist && init_hasTrack)
-            ? ult::INPROGRESS_SYMBOL
-            : i18n::trackCountLabel(count);
-        m_queue_button = new tsl::elm::CompactListItem(play_ctx::activePlaylistLabel(), queueVal);
-    }
+    m_queue_button = new tsl::elm::CompactListItem(play_ctx::activePlaylistLabel(), playlistRowValue());
 
     m_queue_button->setClickListener([this](u64 keys) -> bool {
         if (keys & HidNpadButton_A) {
@@ -1430,19 +1429,11 @@ void SettingsGui::update() {
         }
     }
 
-    const bool inPlaylist = (play_ctx::source() == play_ctx::Source::Playlist);
     const bool inFolder   = (play_ctx::source() == play_ctx::Source::Folder);
     const bool hasTrack   = (play_ctx::currentPath()[0] != '\0');
 
-    if (m_queue_button) {
-        if (inPlaylist && hasTrack) {
-            m_queue_button->setValue(ult::INPROGRESS_SYMBOL);
-        } else {
-            const u32 count = play_ctx::savedPlaylistSize();
-            m_last_count = count;
-            m_queue_button->setValue(i18n::trackCountLabel(count));
-        }
-    }
+    if (m_queue_button)
+        m_queue_button->setValue(playlistRowValue());
 
     if (m_browser_button) {
         m_browser_button->setValue(

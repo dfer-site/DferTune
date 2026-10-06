@@ -23,7 +23,7 @@ struct ScalarCache {
     std::mutex         mu;
 
     bool  shuffle{false};
-    int   repeat{1};
+    int   repeat{2};   // TuneRepeatMode_All (list repeat)
     float volume{1.f};
     bool  auto_play_startup{false};
     bool  wait_for_home{false};
@@ -42,7 +42,16 @@ struct ScalarCache {
         std::lock_guard<std::mutex> lk(mu);
         if (loaded.load(std::memory_order_relaxed)) return;
         shuffle          = ini_getbool("config", "shuffle",          false, CONFIG_PATH);
-        repeat           = (int)ini_getl("config", "repeat",         1,     CONFIG_PATH);
+        repeat           = (int)ini_getl("config", "repeat",         2,     CONFIG_PATH);
+        // Up to 5.6.0-dfer.2 the default was single-track repeat (1). Move existing
+        // configs to list repeat once; the marker keeps a later choice from being reset.
+        if (ini_getl("config", "repeat_default_v2", 0, CONFIG_PATH) == 0) {
+            if (repeat == 1) {   // only the old default; an explicit Off or All is kept
+                repeat = 2;
+                ini_putl("config", "repeat", repeat, CONFIG_PATH);
+            }
+            ini_putl("config", "repeat_default_v2", 1, CONFIG_PATH);
+        }
         volume           = ini_getf("config", "volume",              1.f,   CONFIG_PATH);
         auto_play_startup= ini_getbool("config", "auto_play_startup",false, CONFIG_PATH);
         wait_for_home    = ini_getbool("config", "wait_for_home",    false, CONFIG_PATH);

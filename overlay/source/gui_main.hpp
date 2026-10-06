@@ -187,10 +187,9 @@ private:
     tsl::elm::ListItem  *m_browser_button = nullptr;
     tsl::elm::ListItem  *m_language_button = nullptr;
     tsl::elm::ListItem  *m_equalizer_button = nullptr;
-    u32                  m_last_count     = UINT32_MAX; /* sentinel — forces first refresh */
 
-    /* Called directly by the PlaylistGui callback and by update() for the
-       BrowserGui case.  Updates the label only when the count has changed. */
+    /* Called by the PlaylistGui / BrowserGui callbacks after the playlist changed.
+       The row no longer shows a count; this only refreshes its marker. */
     void refreshPlaylistCount(u32 count);
 
     // ---- Volume mute-toggle state ----------------------------------------
