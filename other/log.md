@@ -1,6 +1,6 @@
 # AI 上下文记录
 
-更新时间：2026-10-06 07:20 UTC
+更新时间：2026-10-06 07:51 UTC
 
 ## 项目与仓库
 
@@ -39,12 +39,18 @@
 - 播放列表标题只显示槽位序号（原来的 “1/5” 被误读成歌曲数）。
 
 验证方法与注意：
-- 远程分支 `claude/gallant-hawking-vqbi7i`（第二轮遗留，内容已并入 main）在沙箱里删不掉（`git push --delete` 被断开），需用户在 GitHub 上手动删除。
+- 多余的远程分支（如 `claude/gallant-hawking-vqbi7i`）在沙箱里删不掉（`git push --delete` 被断开），用户已手动删除，现在远程只剩 `main`。
 - 沙箱没有 devkitPro，Docker 守护进程不可用且 Docker Hub 匿名拉取被限流。**正式工作流在版本号不变时 `build` 任务会被跳过**，不能用它验证编译。做法：因为只用 `main`，临时工作流改为 `on: push` 到 `main`（或用 `workflow_dispatch`，但新文件须先在默认分支存在），用 `devkitpro/devkita64` 容器跑 `make prepare-overlay-lib && make clean && make`，先单独提交该工作流并确认编译通过，再提交真正的改动或删除它；注意带版本号变化的推送会直接发版。（第二轮曾在开发分支上这样做。）
 - 纯逻辑可在本机验证：用桩头文件（`switch.h`、`tesla.hpp`）加内存版假 IPC 编译真实的 `play_context.cpp`，并把 `/config/DferTune` 用 `sed` 改到 `/tmp` 下，**不要**对 `/config` 之类系统路径做 `rm -rf`（会被安全检查拦下）。
 - **只改发布说明（`.github/releases/*.md`）、README、日志这类文件时，推送不会触发发布工作流**（它的 `paths` 过滤只含代码目录、Makefile 和几个校验脚本），所以 release 正文不会自动更新。要同步，推送后手动触发一次 `build-and-release.yml`（`publish=false`）：版本标签已存在，只会跑 `sync-release-notes`，build 被跳过；然后读 release 正文确认。（dfer.4 的升级说明就是这样补更新的。）
 - 手动触发 `build-and-release.yml` 时 `sync-release-notes` 会按仓库里的 `.github/releases/v<版本>.md` 改写已有 release 正文，注意别用开发分支上的旧文件触发。
-- 仍未在真机验证：游戏焦点修复、气泡位置与换行、帮助页滚动、L/R/ZR 快捷键手感。
+
+## 真机验证状态（用户已装 dfer.4，等待反馈）
+
+- 每次改动都要向用户说明“是否在真机验证过”；本沙箱无法操作真机，只能给测试清单。
+- **仍未在真机验证**：游戏焦点修复（读代码找的根因）、宽界面（576）下各页面排版、换行后标题行高、气泡位置、帮助页滚动、L/R/ZR 手感、默认列表循环迁移、开机后播放列表数量是否保持（已缩短的旧列表无法恢复，需重新添加）、bat 在真实 Windows cmd 下的表现（只用 PowerShell 7 和 Python 测过）。
+- 用户已知：DBI 提示缺 `prod.keys` 与 DferTune 无关，已用 Lockpick_RCM 的 “Dump from SysNAND” 解决；`prod.keys` 是用户主机独有密钥，不要外传。
+- 其他小坑：Python 的 mutagen 不能写 ID3v2.2（测试样本要手工拼字节）；bat 里改缩进时要按真实缩进匹配替换。
 
 ## 已知现象：中文文件名读不到
 
@@ -94,5 +100,5 @@
 
 ## 后续可做
 
-- 用户真机测试并反馈；视结果发新版（改四处版本号 + 新增 `.github/releases/v<新版本>.md`，提交勿带 `[skip ci]` 才会自动发版，或手动触发 `publish=true`）。
-- 用户真机测试第二轮改动并反馈；补真机截图；确认下载徽章恢复；可选清理 `DferTune/impl/`；可选 fork `libryazhahand` 摆脱上游依赖。
+- 视反馈发新版（改四处版本号 + 新增 `.github/releases/v<新版本>.md`，提交勿带 `[skip ci]` 才会自动发版，或手动触发 `publish=true`）。
+- 按真机测试反馈在 `main` 上修，未经用户明确要求不要自行发新版；补真机截图；确认下载徽章恢复；可选清理 `DferTune/impl/`；可选 fork `libryazhahand` 摆脱上游依赖。
