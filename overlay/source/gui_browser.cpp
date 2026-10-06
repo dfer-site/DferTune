@@ -797,25 +797,27 @@ void BrowserGui::addAllToPlaylist(const std::string &path) {
     // Each file goes through addTrackUnique: files already listed are skipped
     // and same-name files overwrite the older entry, so repeated imports of the
     // same folder never pile up duplicates.
-    s64 added = 0, replaced = 0, skipped = 0;
+    s64 added = 0, replaced = 0, skipped = 0, failed = 0;
 
     for (const auto &file : file_list) {
         switch (play_ctx::addTrackUnique(path + file)) {
             case play_ctx::AddResult::Added:    ++added;    break;
             case play_ctx::AddResult::Replaced: ++replaced; break;
             case play_ctx::AddResult::Skipped:  ++skipped;  break;
-            case play_ctx::AddResult::Failed:   break;
+            case play_ctx::AddResult::Failed:   ++failed;   break;
         }
     }
 
     const s64 songs_added = added + replaced;
-    char msg[128];
-    if (replaced == 0 && skipped == 0) {
+    char msg[160];
+    if (replaced == 0 && skipped == 0 && failed == 0) {
         std::snprintf(msg, sizeof(msg), i18n::t(i18n::Str::AddedManyTracksFmt), static_cast<long long>(added));
     } else {
+        // Failed means the background service refused the file (missing, unsupported
+        // or a path over 255 bytes), so say so instead of silently adding fewer.
         std::snprintf(msg, sizeof(msg), i18n::t(i18n::Str::AddedManyTracksDedupFmt),
                       static_cast<long long>(added), static_cast<long long>(replaced),
-                      static_cast<long long>(skipped));
+                      static_cast<long long>(skipped), static_cast<long long>(failed));
     }
     if (tsl::notification) tsl::notification->showNow(msg);
     if (songs_added > 0)

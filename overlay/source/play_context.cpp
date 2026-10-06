@@ -161,20 +161,67 @@ namespace {
         g_pending_polls = 0;
     }
 
-    // Snapshot current IPC playlist to g_saved (overwrites), then flush disk.
-    void snapshotIPC() {
-        g_saved.clear();
+    // Read the service queue into 'out', in the order the service plays it
+    // (which follows the shuffle mode). Returns false when IPC fails.
+    bool readIPCQueue(std::vector<std::string>& out) {
+        out.clear();
         u32 count = 0;
-        if (R_FAILED(tuneGetPlaylistSize(&count))) {
-            writeSaved();
-            return;
-        }
+        if (R_FAILED(tuneGetPlaylistSize(&count)))
+            return false;
         char path[FS_MAX_PATH];
-        g_saved.reserve(count);
+        out.reserve(count);
         for (u32 i = 0; i < count; ++i) {
             if (R_SUCCEEDED(tuneGetPlaylistItem(i, path, sizeof(path))))
-                g_saved.emplace_back(path);
+                out.emplace_back(path);
         }
+        return true;
+    }
+
+    // True when both lists hold exactly the same tracks, ignoring order and
+    // letter case (the SD card is case-insensitive).
+    bool sameTracks(const std::vector<std::string>& a, const std::vector<std::string>& b) {
+        if (a.size() != b.size())
+            return false;
+        auto key = [](const std::vector<std::string>& v) {
+            std::vector<std::string> k;
+            k.reserve(v.size());
+            for (const auto& p : v) {
+                std::string lower(p);
+                for (char& c : lower)
+                    if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+                k.push_back(std::move(lower));
+            }
+            std::sort(k.begin(), k.end());
+            return k;
+        };
+        return key(a) == key(b);
+    }
+
+    // Replace saved[] with whatever the service queue holds, then flush disk.
+    // Only for the very first run, when no playlist file exists yet.
+    void adoptIPCQueue() {
+        std::vector<std::string> queue;
+        readIPCQueue(queue);
+        g_saved = std::move(queue);
+        writeSaved();
+    }
+
+    // Take over the service's queue ORDER (it follows shuffle) so the playlist
+    // page lists tracks in the order they will play.
+    //
+    // saved[] is the user's playlist and is authoritative. The service queue is
+    // only allowed to reorder it, never to replace it: if the queue holds a
+    // different set of tracks (for example only the startup file/folder that was
+    // loaded at boot, or tracks the service refused), saved[] is left alone.
+    // Overwriting it from such a queue is what used to shrink a playlist of
+    // dozens of songs down to a handful.
+    void snapshotIPC() {
+        std::vector<std::string> queue;
+        if (!readIPCQueue(queue))
+            return;
+        if (!sameTracks(queue, g_saved))
+            return;
+        g_saved = std::move(queue);
         writeSaved();
     }
 
@@ -451,7 +498,7 @@ void init() {
             fclose(probe);
             readSaved();
         } else {
-            snapshotIPC();
+            adoptIPCQueue();
         }
     }
 
@@ -489,6 +536,19 @@ void init() {
         }
         for (const auto& s : g_saved)
             tuneEnqueue(s.c_str(), TuneEnqueueType_Back);
+    }
+
+    // The service queue can hold something other than the saved playlist: most
+    // often the startup file/folder it loaded at boot. Then the playlist is not
+    // "live" in the service, so leave Playlist context. Nothing will resync or
+    // overwrite saved[] from that queue, and playing a playlist row rebuilds the
+    // queue from saved[] (switchToPlaylist) instead of selecting a wrong index.
+    if (g_source == Source::Playlist) {
+        std::vector<std::string> queue;
+        if (readIPCQueue(queue) && !queue.empty() && !sameTracks(queue, g_saved)) {
+            g_source = Source::Folder;
+            g_folder_path.clear();
+        }
     }
 
     poll();

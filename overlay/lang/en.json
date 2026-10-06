@@ -190,6 +190,14 @@
     "A edit/B done · L/R band · ↑/↓ gain": "A edit/B done · L/R band · ↑/↓ gain",
     "Replaced same-name track in Playlist.": "Replaced same-name track in Playlist.",
     "Already in Playlist.": "Already in Playlist.",
-    "Added %lld, replaced %lld, skipped %lld.": "Added %lld, replaced %lld, skipped %lld.",
-    "OK": "OK"
+    "OK": "OK",
+    "Help": "Help",
+    "About": "About",
+    "Version": "Version",
+    "Author": "Author",
+    "Email": "Email",
+    "Website": "Website",
+    "License": "License",
+    "Based on": "Based on",
+    "Added %lld, replaced %lld, skipped %lld, failed %lld.": "Added %lld, replaced %lld, skipped %lld, failed %lld."
 }

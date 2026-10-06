@@ -190,6 +190,14 @@
     "A edit/B done · L/R band · ↑/↓ gain": "A 编辑/B 完成 · L/R 频段 · ↑/↓ 增益",
     "Replaced same-name track in Playlist.": "已覆盖播放列表中的同名歌曲。",
     "Already in Playlist.": "播放列表中已有这首歌。",
-    "Added %lld, replaced %lld, skipped %lld.": "新增%lld首，覆盖%lld首，跳过%lld首。",
-    "OK": "确定"
+    "OK": "确定",
+    "Help": "帮助",
+    "About": "关于",
+    "Version": "版本",
+    "Author": "作者",
+    "Email": "邮箱",
+    "Website": "网站",
+    "License": "许可证",
+    "Based on": "基于",
+    "Added %lld, replaced %lld, skipped %lld, failed %lld.": "新增%lld首，覆盖%lld首，跳过%lld首，失败%lld首。"
 }

@@ -70,6 +70,40 @@ private:
 };
 
 // ---------------------------------------------------------------------------
+// Help page — what the plugin is and how to use it
+// ---------------------------------------------------------------------------
+class HelpGui final : public SysTuneGui {
+public:
+    ~HelpGui();
+
+    tsl::elm::Element *createUI() final;
+    bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos,
+                     HidAnalogStickState joyStickPosLeft,
+                     HidAnalogStickState joyStickPosRight) override;
+
+private:
+    tsl::elm::List      *m_list  = nullptr;
+    SysTuneOverlayFrame *m_frame = nullptr;
+};
+
+// ---------------------------------------------------------------------------
+// About page — version and author details
+// ---------------------------------------------------------------------------
+class AboutGui final : public SysTuneGui {
+public:
+    ~AboutGui();
+
+    tsl::elm::Element *createUI() final;
+    bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos,
+                     HidAnalogStickState joyStickPosLeft,
+                     HidAnalogStickState joyStickPosRight) override;
+
+private:
+    tsl::elm::List      *m_list  = nullptr;
+    SysTuneOverlayFrame *m_frame = nullptr;
+};
+
+// ---------------------------------------------------------------------------
 // Startup playback and system-context settings
 // ---------------------------------------------------------------------------
 class StartupSettingsGui final : public SysTuneGui {

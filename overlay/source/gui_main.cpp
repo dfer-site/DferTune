@@ -3,6 +3,7 @@
 #include "elm_overlayframe.hpp"
 #include "elm_equalizer.hpp"
 #include "elm_volume.hpp"
+#include "elm_textblock.hpp"
 #include "gui_browser.hpp"
 #include "gui_playlist.hpp"
 #include "play_context.hpp"
@@ -433,6 +434,81 @@ tsl::elm::Element* LanguageGui::createUI() {
 bool LanguageGui::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos,
                               HidAnalogStickState joyStickPosLeft,
                               HidAnalogStickState joyStickPosRight) {
+    return SysTuneGui::handleInput(keysDown, keysHeld, touchPos,
+                                   joyStickPosLeft, joyStickPosRight);
+}
+
+// =============================================================================
+// HelpGui / AboutGui
+// =============================================================================
+
+HelpGui::~HelpGui() {
+    delete m_list;
+}
+
+tsl::elm::Element* HelpGui::createUI() {
+    i18n::syncFromConfig();
+    // No footer page button: B returns to Settings.
+    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
+    m_list = new tsl::elm::List();
+
+    m_list->addItem(new tsl::elm::CompactCategoryHeader(i18n::t(i18n::Str::Help)));
+
+    const s32 rowWidth = static_cast<s32>(tsl::cfg::FramebufferWidth) - 85;
+    const i18n::InfoSections help = i18n::helpSections();
+    for (std::size_t i = 0; i < help.count; ++i) {
+        auto *block = new TextBlock(help.items[i].heading, help.items[i].body, rowWidth);
+        m_list->addItem(block, block->preferredHeight());
+    }
+
+    m_frame->setContent(m_list);
+    return m_frame;
+}
+
+bool HelpGui::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos,
+                          HidAnalogStickState joyStickPosLeft,
+                          HidAnalogStickState joyStickPosRight) {
+    return SysTuneGui::handleInput(keysDown, keysHeld, touchPos,
+                                   joyStickPosLeft, joyStickPosRight);
+}
+
+AboutGui::~AboutGui() {
+    delete m_list;
+}
+
+tsl::elm::Element* AboutGui::createUI() {
+    i18n::syncFromConfig();
+    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
+    m_list = new tsl::elm::List();
+
+    m_list->addItem(new tsl::elm::CompactCategoryHeader(i18n::t(i18n::Str::About)));
+
+    const s32 rowWidth = static_cast<s32>(tsl::cfg::FramebufferWidth) - 85;
+    const i18n::InfoSections intro = i18n::aboutSections();
+    for (std::size_t i = 0; i < intro.count; ++i) {
+        auto *block = new TextBlock(intro.items[i].heading, intro.items[i].body, rowWidth);
+        m_list->addItem(block, block->preferredHeight());
+    }
+
+    // Author details are not translated: they are names and contact data.
+    const auto addRow = [this](const char *label, const char *value) {
+        m_list->addItem(new tsl::elm::CompactListItem(label, value));
+    };
+    addRow(i18n::t(i18n::Str::Author),  "dfer");
+    addRow(i18n::t(i18n::Str::Email),   "df_business@qq.com");
+    addRow("QQ",                        "3504725309");
+    addRow(i18n::t(i18n::Str::Website), "http://www.dfer.site");
+    addRow(i18n::t(i18n::Str::Version), VERSION);
+    addRow(i18n::t(i18n::Str::License), "GPL v2");
+    addRow(i18n::t(i18n::Str::BasedOn), "RyazhaTune / sys-tune");
+
+    m_frame->setContent(m_list);
+    return m_frame;
+}
+
+bool AboutGui::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos,
+                           HidAnalogStickState joyStickPosLeft,
+                           HidAnalogStickState joyStickPosRight) {
     return SysTuneGui::handleInput(keysDown, keysHeld, touchPos,
                                    joyStickPosLeft, joyStickPosRight);
 }
@@ -1244,6 +1320,31 @@ tsl::elm::Element* SettingsGui::createUI() {
     });
     m_list->addItem(startup_settings);
     m_frame->addHint(startup_settings, i18n::Hint::StartupSettings);
+
+    // Help and About sit just above "Stop DferTune", which stays the last row.
+    auto *help_item = new tsl::elm::CompactListItem(
+        i18n::t(i18n::Str::Help), ult::DROPDOWN_SYMBOL);
+    help_item->setClickListener([](u64 keys) -> bool {
+        if (keys & HidNpadButton_A) {
+            tsl::changeTo<HelpGui>();
+            return true;
+        }
+        return false;
+    });
+    m_list->addItem(help_item);
+    m_frame->addHint(help_item, i18n::Hint::HelpPage);
+
+    auto *about_item = new tsl::elm::CompactListItem(
+        i18n::t(i18n::Str::About), ult::DROPDOWN_SYMBOL);
+    about_item->setClickListener([](u64 keys) -> bool {
+        if (keys & HidNpadButton_A) {
+            tsl::changeTo<AboutGui>();
+            return true;
+        }
+        return false;
+    });
+    m_list->addItem(about_item);
+    m_frame->addHint(about_item, i18n::Hint::AboutPage);
 
     auto exit_button = new tsl::elm::CompactSilentListItem(i18n::t(i18n::Str::StopDferTune));
     exit_button->setValue("\uE071", true);

@@ -98,8 +98,16 @@ constexpr std::array<Pair, static_cast<std::size_t>(Str::Count_)> kPairs = {{
     {"Remove All"},
     {"Replaced same-name track in Playlist."},
     {"Already in Playlist."},
-    {"Added %lld, replaced %lld, skipped %lld."},
+    {"Added %lld, replaced %lld, skipped %lld, failed %lld."},
     {"OK"},
+    {"Help"},
+    {"About"},
+    {"Version"},
+    {"Author"},
+    {"Email"},
+    {"Website"},
+    {"License"},
+    {"Based on"},
 }};
 
 
@@ -186,8 +194,16 @@ constexpr std::array<const char *, static_cast<std::size_t>(Str::Count_)> kZhCn 
     "全部移除",
     "已覆盖播放列表中的同名歌曲。",
     "播放列表中已有这首歌。",
-    "新增%lld首，覆盖%lld首，跳过%lld首。",
+    "新增%lld首，覆盖%lld首，跳过%lld首，失败%lld首。",
     "确定",
+    "帮助",
+    "关于",
+    "版本",
+    "作者",
+    "邮箱",
+    "网站",
+    "许可证",
+    "基于",
 }};
 
 constexpr std::array<LocaleTable, 1> kLocaleTables = {{
@@ -231,6 +247,8 @@ constexpr std::array<const char *, static_cast<std::size_t>(Hint::Count_)> kHint
     "Next track (shortcut R).",
     "Repeat: off / one / all.",
     "Left/Right seeks 5 seconds. Hold to speed up.",
+    "A opens an overview of the plugin and how to use it.",
+    "A shows the author's details and version.",
 }};
 
 constexpr std::array<const char *, static_cast<std::size_t>(Hint::Count_)> kHintZh = {{
@@ -270,7 +288,47 @@ constexpr std::array<const char *, static_cast<std::size_t>(Hint::Count_)> kHint
     "下一首（快捷键 R）。",
     "循环模式：关 / 单曲 / 列表。",
     "←/→ 快退快进 5 秒，长按加速。",
+    "A 查看插件介绍和详细用法。",
+    "A 查看作者资料和版本信息。",
 }};
+
+constexpr InfoSection kHelpEn[] = {
+    {"Overview", "DferTune is a background music player for the Switch. A background module plays the music, so it keeps going in games, and you control it from the Tesla overlay. Supports MP3, FLAC and WAV."},
+    {"Quick start", "1. Put your songs in the /music/ folder on the SD card.\n2. Press X to open Settings, enter Browse and go to the folder with your songs.\n3. Press Y to add one track or X to add the whole folder, then press A to play."},
+    {"Player keys", "X opens Settings; L previous track; R next track; ZR play / pause; A activates the selected button; Left/Right moves between buttons, or seeks 5 seconds on the progress bar (hold to speed up); B closes the overlay."},
+    {"Browse and add", "Browse starts at /music/ and only reads the folders you enter. A plays or opens a folder, Y adds to the playlist, X adds every track in the current folder (up to 300, no subfolders), Minus sets it as the startup track, B goes back."},
+    {"Automatic dedupe", "Tracks are compared by file name when you add them: the same file is never added twice, and a file with the same name from another folder overwrites the older entry."},
+    {"Playlists", "There are 5 independent playlists. On the playlist page, Left/Right switches list, A plays, Y removes, X clears, Minus sets startup, Plus undoes a removal within a few seconds."},
+    {"Title Focus / Home Focus", "Title Focus: what happens to the music when you enter a game - Pass / Play / Pause. Home Focus: the same when you press HOME. To set one game separately, turn off its Default Focus and use Custom Focus."},
+    {"Playback mode", "Normal: music plays in every game. Whitelist: only listed games play music. Blacklist: listed games stay silent. Add the current game to a list from Settings."},
+    {"Equalizer", "Five bands (100 Hz to 10 kHz, +/-12 dB) for DferTune's music or for game and system output. A starts editing, L/R picks a band, Up/Down changes gain, A or B finishes."},
+    {"Startup settings", "Auto-play at boot, wait for the HOME menu before playing, and pause automatically on the lock screen, the on-screen keyboard and controller pairing."},
+    {"What is remembered", "Playlists and the startup path are saved; the browse location is not. After a reboot the saved playlist is loaded back into the queue the first time you open the overlay."},
+    {"Tips", "Move the cursor to any row for a bubble that explains it. B goes back one level. About, at the bottom of Settings, shows the author's details."},
+};
+
+constexpr InfoSection kHelpZh[] = {
+    {"简介", "DferTune 是 Switch 的后台音乐播放器：音乐由后台模块播放，进游戏也不会中断，用 Tesla 悬浮菜单来控制。支持 MP3、FLAC、WAV。"},
+    {"快速开始", "1. 把歌曲放进 SD 卡的 /music/ 文件夹。\n2. 按 X 打开设置，进入「浏览」，找到歌曲所在的文件夹。\n3. 按 Y 添加单曲，或按 X 添加整个文件夹，再按 A 开始播放。"},
+    {"播放界面按键", "X 打开设置；L 上一首；R 下一首；ZR 播放 / 暂停；A 触发当前按钮；←/→ 在按钮间移动，在进度条上快退 / 快进 5 秒（长按加速）；B 关闭悬浮菜单。"},
+    {"浏览与添加", "浏览从 /music/ 开始，只读取你进入的文件夹。A 播放或打开文件夹，Y 加入播放列表，X 添加当前文件夹的全部歌曲（一次最多 300 首，不含子文件夹），− 设为开机播放，B 返回。"},
+    {"自动去重", "添加歌曲时按文件名比较：同一个文件不会重复添加；文件名相同但在不同文件夹时，新添加的会覆盖旧的。"},
+    {"播放列表", "共有 5 个播放列表，互相独立。在播放列表页，←/→ 切换列表，A 播放，Y 移除，X 清空，− 设为开机播放，+ 可在几秒内撤销移除。"},
+    {"游戏焦点 / 主页焦点", "游戏焦点：进入游戏界面时，音乐「跳过 / 播放 / 暂停」。主页焦点：按 HOME 回到主页时同样处理。想让某个游戏单独设置，先关闭它的「默认焦点」，再使用「自定义焦点」。"},
+    {"播放模式", "普通：所有游戏都播放音乐。白名单：只有名单里的游戏播放。黑名单：名单里的游戏不播放。当前游戏可以在设置里加入白名单或黑名单。"},
+    {"均衡器", "五段均衡器（100 Hz 到 10 kHz，±12 dB），可作用于 DferTune 的音乐，也可作用于游戏和系统输出。A 开始编辑，L/R 选频段，↑/↓ 调增益，A 或 B 结束。"},
+    {"启动设置", "开机自动播放、等进入主页后再播放，以及锁屏、屏幕键盘、手柄配对时自动暂停。"},
+    {"重启后会记住什么", "播放列表和开机播放路径会保存；浏览位置不保存。重启后第一次打开悬浮菜单，才会把保存的播放列表装回队列。"},
+    {"小提示", "光标移到任意一行，会弹出气泡说明这一项；B 逐级返回；设置页底部有「关于」，可查看作者资料。"},
+};
+
+constexpr InfoSection kAboutEn[] = {
+    {"DferTune", "A background music player for Nintendo Switch (sysmodule + Tesla overlay) with MP3 / FLAC / WAV, a five-band equalizer, playlists and per-game filtering. A Simplified Chinese fork of RyazhaTune and sys-tune."},
+};
+
+constexpr InfoSection kAboutZh[] = {
+    {"DferTune", "Nintendo Switch 的后台音乐播放器（后台模块 + Tesla 悬浮菜单），支持 MP3 / FLAC / WAV、五段均衡器、播放列表和按游戏过滤。基于 RyazhaTune 与 sys-tune 的简体中文分支。"},
+};
 
 static_assert(kPairs.size() == static_cast<std::size_t>(Str::Count_),
               "kPairs size must match Str::Count_");
@@ -324,6 +382,23 @@ const char *hint(Hint id) {
     if (i >= kHintEn.size())
         return "";
     return std::strcmp(g_lang, "en") == 0 ? kHintEn[i] : kHintZh[i];
+}
+
+namespace {
+
+template <std::size_t N>
+constexpr InfoSections span(const InfoSection (&items)[N]) {
+    return InfoSections{items, N};
+}
+
+} // namespace
+
+InfoSections helpSections() {
+    return std::strcmp(g_lang, "en") == 0 ? span(kHelpEn) : span(kHelpZh);
+}
+
+InfoSections aboutSections() {
+    return std::strcmp(g_lang, "en") == 0 ? span(kAboutEn) : span(kAboutZh);
 }
 
 const char *text(const char *englishKey) {

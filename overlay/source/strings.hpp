@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 /** Overlay UI strings: call syncFromConfig() once per GUI frame before t(). */
@@ -87,9 +88,17 @@ enum class Str : std::uint8_t {
     RemoveAll,
     ReplacedOneTrack,
     TrackAlreadyAdded,
-    /** snprintf format, three args: long long added, replaced, skipped */
+    /** snprintf format, four args: long long added, replaced, skipped, failed */
     AddedManyTracksDedupFmt,
     Ok,
+    Help,
+    About,
+    Version,
+    Author,
+    Email,
+    Website,
+    License,
+    BasedOn,
     Count_
 };
 
@@ -132,8 +141,27 @@ enum class Hint : std::uint8_t {
     BtnNext,
     BtnRepeat,
     SeekBar,
+    HelpPage,
+    AboutPage,
     Count_
 };
+
+/** One paragraph of the Help / About pages. */
+struct InfoSection {
+    const char *heading;
+    const char *body;
+};
+
+struct InfoSections {
+    const InfoSection *items;
+    std::size_t        count;
+};
+
+/** Built-in Help paragraphs for the active language (falls back to English). */
+InfoSections helpSections();
+
+/** Built-in introduction shown at the top of the About page. */
+InfoSections aboutSections();
 
 const char *t(Str id);
 
