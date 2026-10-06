@@ -1,8 +1,8 @@
 # DferTune
 
-DferTune 是 Nintendo Switch 上的后台音乐播放模块(sysmodule),可以在游戏和系统界面中播放你自己放在 SD 卡上的音频文件,并通过 Tesla 悬浮菜单控制播放。
+DferTune 是 Nintendo Switch 的后台音乐播放器(sysmodule + Tesla 悬浮菜单),支持 MP3 / FLAC / WAV、5 段均衡器、播放列表保存与按游戏过滤。可以在游戏和系统界面中播放你放在 SD 卡上的音频文件。
 
-本项目是 [Dimasick-git/RyazhaTune](https://github.com/Dimasick-git/RyazhaTune) 的中文分支,而 RyazhaTune 又派生自 [HookedBehemoth/sys-tune](https://github.com/HookedBehemoth/sys-tune)。本分支默认使用简体中文界面,并改用独立的名称、配置目录和 Title ID,可以与上游版本并存。
+本项目是 [Dimasick-git/RyazhaTune](https://github.com/Dimasick-git/RyazhaTune) 的简体中文分支,而 RyazhaTune 又派生自 [HookedBehemoth/sys-tune](https://github.com/HookedBehemoth/sys-tune)。界面仅保留简体中文和英文,默认简体中文;并使用独立的名称、配置目录和 Title ID,可以与上游版本并存。
 
 [![最新版本](https://img.shields.io/github/v/release/dfer-site/DferTune?display_name=tag&label=%E7%89%88%E6%9C%AC&style=for-the-badge)](https://github.com/dfer-site/DferTune/releases/latest)
 [![下载次数](https://img.shields.io/github/downloads/dfer-site/DferTune/total?label=%E4%B8%8B%E8%BD%BD&style=for-the-badge)](https://github.com/dfer-site/DferTune/releases)
