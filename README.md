@@ -6,9 +6,9 @@ DferTune 是 Nintendo Switch 的后台音乐播放器(sysmodule + Tesla 悬浮�
 
 [![最新版本](https://img.shields.io/github/v/release/dfer-site/DferTune?display_name=tag&label=%E7%89%88%E6%9C%AC&style=for-the-badge)](https://github.com/dfer-site/DferTune/releases/latest)
 [![下载次数](https://img.shields.io/github/downloads/dfer-site/DferTune/total?label=%E4%B8%8B%E8%BD%BD&style=for-the-badge)](https://github.com/dfer-site/DferTune/releases)
-![访问次数](https://visitor-badge.laobi.icu/badge?page_id=dfer-site.DferTune&left_text=%E8%AE%BF%E9%97%AE%E9%87%8F)
+![访问量](https://hits.sh/github.com/dfer-site/DferTune.svg?label=%E8%AE%BF%E9%97%AE%E9%87%8F&color=1f6feb)
 
-> 下载次数来自 GitHub Releases 的统计数据;访问量为页面访问次数,由第三方徽章服务提供。
+> 下载次数来自 GitHub Releases 的统计数据;访问量为页面访问次数,由第三方服务 hits.sh 提供,计数从 0 开始。
 
 网站:http://www.dfer.site
 

@@ -27,7 +27,7 @@ if (version !== makefileVersion) {
 
 const requiredBadges = [
   'img.shields.io/github/downloads/dfer-site/DferTune/total',
-  'visitor-badge.laobi.icu/badge?page_id=dfer-site.DferTune',
+  'hits.sh/github.com/dfer-site/DferTune.svg',
 ];
 
 for (const badge of requiredBadges) {
