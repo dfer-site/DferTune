@@ -451,7 +451,9 @@ PlaylistGui::PlaylistGui(std::function<void(u32)> on_count_changed)
 
 tsl::elm::Element *PlaylistGui::createUI() {
     i18n::syncFromConfig();
-    auto *rootFrame = new SysTuneOverlayFrame(/*pageLeft=*/i18n::t(i18n::Str::Player), /*pageRight=*/"");
+    // No footer page button: B returns to Settings, and from there to the player.
+    auto *rootFrame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
+    rootFrame->addListHint(this->m_list, i18n::Hint::PlaylistTrack);
     rootFrame->setContent(this->m_list);
     return rootFrame;
 }

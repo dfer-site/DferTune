@@ -56,6 +56,22 @@ namespace play_ctx {
     // These always update the in-memory vector AND flush to disk.
 
     void savedAppend(const std::string& path);
+
+    enum class AddResult {
+        Added,      // new track appended
+        Replaced,   // same file name already listed: the new path overwrote it
+        Skipped,    // exactly this file is already listed: nothing changed
+        Failed,     // IPC refused the change; the playlist is unchanged
+    };
+
+    /** Import one track without creating duplicates.
+     *
+     *  Tracks are compared by file name (case-insensitive). If the same file
+     *  name is already in the saved playlist, the new path overwrites the old
+     *  entry (and the matching IPC queue entry when in Playlist context);
+     *  if it is the very same path, nothing happens. Otherwise the track is
+     *  appended. In Playlist context the IPC queue and saved[] are kept in sync. */
+    AddResult addTrackUnique(const std::string& path);
     /** Insert a path into the saved playlist at idx (0-based). Clamps idx to size. */
     void savedInsert(u32 idx, const std::string& path);
     void savedRemove(u32 idx);   // 0-based

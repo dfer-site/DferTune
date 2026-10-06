@@ -2,9 +2,11 @@
 
 #include <tesla.hpp>
 #include "strings.hpp"
+#include "elm_tooltip.hpp"
 #include <atomic>
 #include <optional>
 #include <string>
+#include <vector>
 
 /**
  * @brief Base frame for DferTune overlay pages.
@@ -98,7 +100,7 @@ public:
         if (hasNextPage) {
             const std::string pageLabel = !m_pageLeftName.empty()
                 ? ("\uE0ED" + ult::GAP_2 + m_pageLeftName)
-                : ("\uE0EE" + ult::GAP_2 + m_pageRightName);
+                : ("\uE0E2" + ult::GAP_2 + m_pageRightName);
 
             const float _nextPageWidth = renderer->getTextDimensions(pageLabel, false, 23).first + gapWidth;
             updateAtomic(ult::nextPageWidth, _nextPageWidth);
@@ -122,8 +124,8 @@ public:
             "\uE0E1" + ult::GAP_2 + ult::BACK  + ult::GAP_1 +
             "\uE0E0" + ult::GAP_2 + ult::OK    + ult::GAP_1 +
             (!m_pageLeftName.empty()  ? "\uE0ED" + ult::GAP_2 + m_pageLeftName  + ult::GAP_1 :
-             !m_pageRightName.empty() ? "\uE0EE" + ult::GAP_2 + m_pageRightName + ult::GAP_1 :
-             "\uE0E2" + ult::GAP_2 + i18n::t(i18n::Str::Language) + ult::GAP_1);
+             !m_pageRightName.empty() ? "\uE0E2" + ult::GAP_2 + m_pageRightName + ult::GAP_1 :
+             std::string());
 
         renderer->drawStringWithColoredSections(currentBottomLine, false, tsl::s_footerSpecialChars,
             buttonStartX, 693, 23, tsl::bottomTextColor, tsl::buttonColor);
@@ -137,6 +139,40 @@ public:
         // --- Content ---
         if (m_contentElement != nullptr)
             m_contentElement->frame(renderer);
+
+        // --- Tooltip for the focused row ---
+        // Elements that draw their own sub-parts (the player buttons) have
+        // already queued a request; otherwise look for a registered row that
+        // currently has focus. The bubble disappears as soon as focus moves
+        // to a row without a hint, because nothing requests it any more.
+        if (!tip::pending()) {
+            for (const auto &entry : m_hints) {
+                if (entry.element != nullptr && entry.element->hasFocus()) {
+                    tip::request(entry.element, i18n::hint(entry.hint),
+                                 entry.element->getTopBound(), entry.element->getBottomBound());
+                    break;
+                }
+            }
+        }
+        // Lists whose rows come and go (playlist, file browser) are scanned
+        // live instead, so a removed row can never leave a dangling pointer.
+        if (!tip::pending()) {
+            for (const auto &entry : m_listHints) {
+                if (entry.list == nullptr)
+                    continue;
+                const s32 last = entry.list->getLastIndex();
+                for (s32 i = 0; i <= last; ++i) {
+                    tsl::elm::Element *row = entry.list->getItemAtIndex(static_cast<u32>(i));
+                    if (row != nullptr && row->hasFocus()) {
+                        tip::request(row, i18n::hint(entry.hint), row->getTopBound(), row->getBottomBound());
+                        break;
+                    }
+                }
+                if (tip::pending())
+                    break;
+            }
+        }
+        tip::draw(renderer);
 
         // --- Edge separator ---
         if (!ult::useRightAlignment)
@@ -201,6 +237,18 @@ public:
         }
     }
 
+    /** Show a floating tooltip while 'element' has focus. NON-OWNING; the
+     *  element must outlive this frame's draw calls (the owning Gui keeps both). */
+    void addHint(tsl::elm::Element *element, i18n::Hint hint) {
+        m_hints.push_back(HintEntry{element, hint});
+    }
+
+    /** Same, for every focusable row of 'list'. Use for lists that add or
+     *  remove rows at runtime. NON-OWNING; 'list' must outlive this frame. */
+    void addListHint(tsl::elm::List *list, i18n::Hint hint) {
+        m_listHints.push_back(ListHintEntry{list, hint});
+    }
+
     /** Update the footer page labels. Empty string = hide that button. */
     void setPageNames(std::string left, std::string right) {
         m_pageLeftName  = std::move(left);
@@ -222,6 +270,16 @@ private:
         u32   maxW = 0, textW = 0;
         bool  active = false, trunc = false;
         std::string scrollText;
+    };
+
+    struct HintEntry {
+        tsl::elm::Element *element;
+        i18n::Hint         hint;
+    };
+
+    struct ListHintEntry {
+        tsl::elm::List *list;
+        i18n::Hint      hint;
     };
 
     static constexpr const char *TITLE = "DferTune \u266B";
@@ -296,6 +354,8 @@ private:
     tsl::elm::Element *m_contentElement = nullptr; ///< Non-owning.
     std::string        m_pageLeftName;
     std::string        m_pageRightName;
+    std::vector<HintEntry>     m_hints;
+    std::vector<ListHintEntry> m_listHints;
     ScrollState        m_titleScroll;
     ScrollState        m_subScroll;
     //std::optional<Toast> m_toast;

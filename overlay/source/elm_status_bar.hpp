@@ -9,9 +9,6 @@
 #include <atomic>
 #include <tesla.hpp>
 
-/* Global readable by the overlay frame to dim the OK button while R is held. */
-inline std::atomic<bool> g_player_r_held{false};
-
 class StatusBar final : public tsl::elm::Element {
   private:
     bool m_playing;
@@ -51,7 +48,6 @@ class StatusBar final : public tsl::elm::Element {
     u8           m_artist_counter   = 0;
 
     bool m_touched = false;
-    bool m_r_held  = false;  /* true while KEY_R is held */
     bool m_seeking = false;
     bool m_ctrl_scrubbing = false;  /* true while controller hold is previewing a seek */
     float m_seek_feedback_last_pct = -1.f; /* last seek % at which haptic fired; -1 = not yet fired this scrub */
@@ -75,8 +71,6 @@ class StatusBar final : public tsl::elm::Element {
 
     /* 0=Shuffle  1=Prev  2=Play  3=Next  4=Repeat */
     int m_active_btn = 2;
-
-    std::function<void()> m_on_page_right;
 
     /* -----------------------------------------------------------------------
      * Album art
@@ -109,9 +103,11 @@ class StatusBar final : public tsl::elm::Element {
     void update();
     void onHeld(u64 keysHeld);
 
-    void setPageRightCallback(std::function<void()> cb) {
-        m_on_page_right = std::move(cb);
-    }
+    /* Hardware shortcuts (L / R / ZR on the player page). They give the same
+       sound and rumble as pressing the on-screen button, but do not move focus. */
+    void hotkeyPrev()      { PressButton(1, false); }
+    void hotkeyPlayPause() { PressButton(2, false); }
+    void hotkeyNext()      { PressButton(3, false); }
 
     static s32 PreferredHeight(s32 contentWidth) {
         s32 art = (contentWidth - 30) * 9 / 10;   /* matches ArtSize() */
@@ -151,6 +147,7 @@ class StatusBar final : public tsl::elm::Element {
     bool loadArt(const char *fullPath);
     void ensureArtScaled(s32 size);
 
+    void PressButton(int i, bool animate);
     void ActivateButton(int i);
     void CycleRepeat();
     void CyclePlay();

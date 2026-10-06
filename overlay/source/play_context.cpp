@@ -217,10 +217,11 @@ u32  maxPlaylistCount()          { return kMaxPlaylists; }
 std::string activePlaylistLabel() {
     i18n::syncFromConfig();
     char buf[48];
-    std::snprintf(buf, sizeof(buf), "%s %u/%u",
+    // Slot number only. "1/5" looked like a track count next to the real
+    // "3 tracks" value, so the slot total is intentionally not shown.
+    std::snprintf(buf, sizeof(buf), "%s %u",
                   i18n::t(i18n::Str::PlaylistHeader),
-                  static_cast<unsigned>(g_active_playlist + 1),
-                  static_cast<unsigned>(kMaxPlaylists));
+                  static_cast<unsigned>(g_active_playlist + 1));
     return buf;
 }
 
@@ -238,6 +239,67 @@ bool isPlaying() { return g_is_playing; }
 void savedAppend(const std::string& path) {
     g_saved.push_back(path);
     writeSaved();
+}
+
+namespace {
+
+    const char* baseName(const std::string& path) {
+        const std::size_t pos = path.find_last_of('/');
+        return pos == std::string::npos ? path.c_str() : path.c_str() + pos + 1;
+    }
+
+    // Position of 'path' in the live IPC queue (which follows the shuffle
+    // order, like tuneRemove expects), or -1 when it is not queued.
+    s64 findInIPCQueue(const std::string& path) {
+        u32 count = 0;
+        if (R_FAILED(tuneGetPlaylistSize(&count)))
+            return -1;
+        char ipc_path[FS_MAX_PATH];
+        for (u32 i = 0; i < count; ++i) {
+            if (R_SUCCEEDED(tuneGetPlaylistItem(i, ipc_path, sizeof(ipc_path))) &&
+                strcasecmp(path.c_str(), ipc_path) == 0)
+                return static_cast<s64>(i);
+        }
+        return -1;
+    }
+
+} // namespace
+
+AddResult addTrackUnique(const std::string& path) {
+    const bool in_playlist_ctx = (g_source == Source::Playlist);
+    const char* name = baseName(path);
+
+    for (std::size_t i = 0; i < g_saved.size(); ++i) {
+        if (strcasecmp(baseName(g_saved[i]), name) != 0)
+            continue;
+
+        // The very same file is already listed.
+        if (strcasecmp(g_saved[i].c_str(), path.c_str()) == 0)
+            return AddResult::Skipped;
+
+        // Same file name from another folder: the new one overwrites the old.
+        const std::string old_path = g_saved[i];
+        if (in_playlist_ctx) {
+            const s64 queued = findInIPCQueue(old_path);
+            if (queued >= 0 && R_FAILED(tuneRemove(static_cast<u32>(queued))))
+                return AddResult::Failed;
+            if (R_FAILED(tuneEnqueue(path.c_str(), TuneEnqueueType_Back))) {
+                // Best effort: put the old entry back so IPC and saved[] still agree.
+                if (queued >= 0)
+                    tuneEnqueue(old_path.c_str(), TuneEnqueueType_Back);
+                return AddResult::Failed;
+            }
+        }
+        g_saved.erase(g_saved.begin() + static_cast<std::ptrdiff_t>(i));
+        g_saved.push_back(path);
+        writeSaved();
+        return AddResult::Replaced;
+    }
+
+    if (in_playlist_ctx && R_FAILED(tuneEnqueue(path.c_str(), TuneEnqueueType_Back)))
+        return AddResult::Failed;
+    savedAppend(path);
+    return AddResult::Added;
 }
 
 void savedInsert(u32 idx, const std::string& path) {

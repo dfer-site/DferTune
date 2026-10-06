@@ -126,7 +126,7 @@
     "Add to Playlist": "Add to Playlist",
     "Set as Startup": "Set as Startup",
     "Playlist is empty": "Playlist is empty!",
-    "简体中文": "Simplified Chinese",
+    "简体中文": "简体中文",
     "Language changed": "Language changed",
     "Too many entries in folder.": "Too many entries in folder.",
     "Failed to switch to folder.": "Failed to switch to folder.",
@@ -187,5 +187,9 @@
     "1 kHz": "1 kHz",
     "3 kHz": "3 kHz",
     "10 kHz": "10 kHz",
-    "A edit/B done · L/R band · ↑/↓ gain": "A edit/B done · L/R band · ↑/↓ gain"
+    "A edit/B done · L/R band · ↑/↓ gain": "A edit/B done · L/R band · ↑/↓ gain",
+    "Replaced same-name track in Playlist.": "Replaced same-name track in Playlist.",
+    "Already in Playlist.": "Already in Playlist.",
+    "Added %lld, replaced %lld, skipped %lld.": "Added %lld, replaced %lld, skipped %lld.",
+    "OK": "OK"
 }

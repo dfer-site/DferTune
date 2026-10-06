@@ -126,7 +126,7 @@
     "Volume": "音量",
     "Volume ⊘  Toggle Mute": "音量 ⊘  静音",
     "Whitelist": "白名单",
-    "简体中文": "Simplified Chinese",
+    "简体中文": "简体中文",
     "Too many entries in folder.": "文件夹中条目过多。",
     "Failed to switch to folder.": "无法切换文件夹。",
     "Added 1 track to Playlist.": "已将1首歌曲添加到播放列表。",
@@ -187,5 +187,9 @@
     "1 kHz": "1 kHz",
     "3 kHz": "3 kHz",
     "10 kHz": "10 kHz",
-    "A edit/B done · L/R band · ↑/↓ gain": "A 编辑/B 完成 · L/R 频段 · ↑/↓ 增益"
+    "A edit/B done · L/R band · ↑/↓ gain": "A 编辑/B 完成 · L/R 频段 · ↑/↓ 增益",
+    "Replaced same-name track in Playlist.": "已覆盖播放列表中的同名歌曲。",
+    "Already in Playlist.": "播放列表中已有这首歌。",
+    "Added %lld, replaced %lld, skipped %lld.": "新增%lld首，覆盖%lld首，跳过%lld首。",
+    "OK": "确定"
 }

@@ -85,10 +85,60 @@ enum class Str : std::uint8_t {
     Selected,
     Remove,
     RemoveAll,
+    ReplacedOneTrack,
+    TrackAlreadyAdded,
+    /** snprintf format, three args: long long added, replaced, skipped */
+    AddedManyTracksDedupFmt,
+    Ok,
+    Count_
+};
+
+/** Floating tooltip texts shown while a row has focus. Built in for every
+ *  bundled language so they do not depend on the lang files on the SD card. */
+enum class Hint : std::uint8_t {
+    PlaylistSlot,
+    Browse,
+    MusicVolume,
+    GameVolume,
+    PresetVolume,
+    Equalizer,
+    DefaultFocus,
+    CustomFocus,
+    PlaybackMode,
+    WhitelistToggle,
+    BlacklistToggle,
+    Language,
+    TitleFocus,
+    HomeFocus,
+    StartupSettings,
+    StopDferTune,
+    StartupAutoPlay,
+    StartupWaitHome,
+    StartupPauseKeyboard,
+    StartupPauseController,
+    StartupPauseLockscreen,
+    StartupRemove,
+    LanguageOption,
+    EqTuner,
+    EqEnable,
+    EqTarget,
+    EqPreset,
+    EqReset,
+    BrowserRow,
+    PlaylistTrack,
+    BtnShuffle,
+    BtnPrev,
+    BtnPlay,
+    BtnNext,
+    BtnRepeat,
+    SeekBar,
     Count_
 };
 
 const char *t(Str id);
+
+/** Tooltip text for the active language (falls back to English). */
+const char *hint(Hint id);
 
 /** Translate a runtime English key from overlay/lang, falling back to English. */
 const char *text(const char *englishKey);

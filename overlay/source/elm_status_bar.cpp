@@ -10,6 +10,7 @@
 #include "config/config.hpp"
 #include "play_context.hpp"
 #include "strings.hpp"
+#include "elm_tooltip.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -648,29 +649,11 @@ tsl::elm::Element *StatusBar::requestFocus(tsl::elm::Element *oldFocus, tsl::Foc
 // ---------------------------------------------------------------------------
 bool StatusBar::onClick(u64 keys) {
     if (keys & HidNpadButton_A) {
-        /* KEY_R held = navigation mode: block OK so accidental presses
-           don't activate buttons while the user is reaching for a page nav. */
-        if (m_r_held) return true;
-        if (m_active_btn != 5) {
-            /* Determine sound BEFORE the action mutates state. */
-            std::atomic<bool>& sound = [&]() -> std::atomic<bool>& {
-                switch (m_active_btn) {
-                    case 0: return (m_shuffle == TuneShuffleMode_Off) ? triggerOnSound : triggerOffSound;
-                    case 1: return triggerOffSound;
-                    case 2: return m_playing ? triggerOffSound : triggerOnSound;
-                    case 3: return triggerOnSound;
-                    case 4: return (static_cast<TuneRepeatMode>((m_repeat + 1) % TuneRepeatMode_Count) == TuneRepeatMode_Off) ? triggerOffSound : triggerOnSound;
-                    default: return triggerOnSound;
-                }
-            }();
-            ActivateButton(m_active_btn);
-            triggerClickAnimation();
-            triggerFeedbackImpl(triggerRumbleClick, sound);
-        }
+        if (m_active_btn != 5)
+            PressButton(m_active_btn, true);
         return true;
     }
     if (keys & KEY_UP) {
-        if (m_r_held) return true;  /* R held = nav mode, ignore vertical movement */
         /* From the button row → move focus up to the seek bar. */
         if (m_active_btn != 5) {
             m_active_btn = 5;
@@ -681,7 +664,6 @@ bool StatusBar::onClick(u64 keys) {
         return true;  /* always consume — prevents List wrap-around */
     }
     if (keys & KEY_DOWN) {
-        if (m_r_held) return true;  /* R held = nav mode, ignore vertical movement */
         if (m_active_btn == 5) {
             /* From seek bar → drop back down to the play button.
                Cancel any in-progress controller scrub without committing. */
@@ -704,11 +686,9 @@ bool StatusBar::onClick(u64 keys) {
             m_active_btn++;
             triggerNavigationFeedback();
         }
-        else if (m_on_page_right) m_on_page_right();
         return true;
     }
     if (keys & KEY_LEFT) {
-        if (m_r_held) return true;  /* R held = nav mode, ignore */
         if (m_active_btn == 5) { NudgeSeek(-1, 5); return true; }
         if (m_active_btn > 0) {
             m_active_btn--;
@@ -917,12 +897,11 @@ void StatusBar::draw(tsl::gfx::Renderer *renderer) {
         const u64    now_ns = ult::nowNs();
         const double t      = static_cast<double>(now_ns) / 1000000000.0;
         const auto   prog   = ((ult::cos(2.0 * ult::_M_PI * std::fmod(t, 1.0) - ult::_M_PI / 2) + 1.0) / 2.0);
-        const auto   hcol   = m_r_held
-            ? lerpColor(tsl::highlightColor3, tsl::highlightColor4, prog)
-            : lerpColor(tsl::highlightColor1, tsl::highlightColor2, prog);
+        const auto   hcol   = lerpColor(tsl::highlightColor1, tsl::highlightColor2, prog);
         /* Radius = thumb radius (7) + 4 px border. No black fill — highlight
            peeks out 4 px behind the white thumb circle. */
         renderer->drawCircle(thumb_x, bar_y + 2, 7 + 4, true, a(hcol));
+        tip::request(this, i18n::hint(i18n::Hint::SeekBar), bar_y - 12, bar_y + 14);
     }
 
     renderer->drawCircle(thumb_x, bar_y + 2, 7, true, a(0xffff));
@@ -969,8 +948,6 @@ void StatusBar::draw(tsl::gfx::Renderer *renderer) {
             tsl::Color c2 = tsl::clickColor;
             if (cp >= 0.5) { c1 = tsl::clickColor; c2 = tsl::highlightColor2; }
             highlightColor = lerpColor(c1, c2, cp);
-        } else if (m_r_held) {
-            highlightColor = lerpColor(tsl::highlightColor3, tsl::highlightColor4, progress);
         } else {
             highlightColor = lerpColor(tsl::highlightColor1, tsl::highlightColor2, progress);
         }
@@ -978,6 +955,15 @@ void StatusBar::draw(tsl::gfx::Renderer *renderer) {
         const auto [cx, cy] = ButtonCenter(m_active_btn);
         const s32 btn_r = (m_active_btn == 2) ? 24
                         : (m_active_btn == 0 || m_active_btn == 4) ? 18 : 20;
+
+        {
+            static constexpr i18n::Hint kButtonHints[5] = {
+                i18n::Hint::BtnShuffle, i18n::Hint::BtnPrev, i18n::Hint::BtnPlay,
+                i18n::Hint::BtnNext,    i18n::Hint::BtnRepeat,
+            };
+            tip::request(this, i18n::hint(kButtonHints[m_active_btn]),
+                         cy - btn_r - 4, cy + btn_r + 4);
+        }
 
         // Compute saturation color for inner circle
         const u64 btnClickElapsed = (m_btn_click_idx == m_active_btn)
@@ -1375,6 +1361,24 @@ void StatusBar::ensureArtScaled(s32 size) {
 
 // ---------------------------------------------------------------------------
 
+void StatusBar::PressButton(int i, bool animate) {
+    /* Determine sound BEFORE the action mutates state. */
+    std::atomic<bool>& sound = [&]() -> std::atomic<bool>& {
+        switch (i) {
+            case 0: return (m_shuffle == TuneShuffleMode_Off) ? triggerOnSound : triggerOffSound;
+            case 1: return triggerOffSound;
+            case 2: return m_playing ? triggerOffSound : triggerOnSound;
+            case 3: return triggerOnSound;
+            case 4: return (static_cast<TuneRepeatMode>((m_repeat + 1) % TuneRepeatMode_Count) == TuneRepeatMode_Off) ? triggerOffSound : triggerOnSound;
+            default: return triggerOnSound;
+        }
+    }();
+    ActivateButton(i);
+    if (animate)
+        triggerClickAnimation();
+    triggerFeedbackImpl(triggerRumbleClick, sound);
+}
+
 void StatusBar::ActivateButton(int i) {
     m_btn_click_idx      = i;
     m_btn_click_start_ns = ult::nowNs();
@@ -1463,19 +1467,6 @@ const AlphaSymbol &StatusBar::GetPlaybackSymbol() {
 // Implements hold-to-repeat for Left/Right on both the button row and seekbar.
 // ---------------------------------------------------------------------------
 void StatusBar::onHeld(u64 keysHeld) {
-    m_r_held = (keysHeld & KEY_R) != 0;
-    g_player_r_held.store(m_r_held, std::memory_order_release);
-
-    if (m_r_held) {
-        m_hold_start_ns  = 0;
-        m_last_repeat_ns = 0;
-        if (m_ctrl_scrubbing) {
-            m_ctrl_scrubbing = false;
-            m_seeking        = false;
-        }
-        return;
-    }
-
     const bool holdLeft  = (keysHeld & KEY_LEFT)  != 0;
     const bool holdRight = (keysHeld & KEY_RIGHT) != 0;
 

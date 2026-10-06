@@ -49,6 +49,28 @@ void reloadDferTuneTranslations() {
     else
         ult::reinitializeLangVars();
 
+    /* The library's own footer/clock strings come from the Ultrahand language
+     * files, which are normally absent on an SD card. Without this the footer
+     * shows "Back"/"OK" and the clock shows "Tue" regardless of our language. */
+    i18n::syncFromConfig();
+    ult::BACK = i18n::t(i18n::Str::Back);
+    ult::OK   = i18n::t(i18n::Str::Ok);
+    if (std::strcmp(lang, "en") != 0) {
+        ult::SUN = "周日";
+        ult::MON = "周一";
+        ult::TUE = "周二";
+        ult::WED = "周三";
+        ult::THU = "周四";
+        ult::FRI = "周五";
+        ult::SAT = "周六";
+    }
+
+    /* Language names are endonyms. An old lang file on the SD card may still
+     * map "简体中文" to "Simplified Chinese"; pin them so the language row
+     * always shows its own name. */
+    ult::translationCache["简体中文"] = "简体中文";
+    ult::translationCache["English"] = "English";
+
     ult::languageWasChanged.store(true, std::memory_order_release);
 }
 

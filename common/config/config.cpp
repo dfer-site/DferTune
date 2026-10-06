@@ -262,9 +262,13 @@ void set_pause_on_lockscreen(bool value) {
     g_cache.pause_on_lockscreen = value;
 }
 
+/* Title Focus is written by the overlay process but consumed by the sysmodule
+ * process, which cannot see the overlay's in-memory cache. Read the INI every
+ * time instead of using g_cache, otherwise changing it in the overlay has no
+ * effect until the sysmodule restarts. These are only queried on title/focus
+ * transitions, so the file read is cheap. */
 auto get_play_on_title() -> bool {
-    g_cache.load();
-    return g_cache.play_on_title;
+    return ini_getbool("config", "play_on_title", false, CONFIG_PATH);
 }
 
 void set_play_on_title(bool value) {
@@ -275,8 +279,7 @@ void set_play_on_title(bool value) {
 }
 
 auto get_pause_on_title() -> bool {
-    g_cache.load();
-    return g_cache.pause_on_title;
+    return ini_getbool("config", "pause_on_title", false, CONFIG_PATH);
 }
 
 void set_pause_on_title(bool value) {

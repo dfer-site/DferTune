@@ -224,6 +224,30 @@ static void pushBrowserStack() {
         g_browser_return_root, /*on_count_changed=*/nullptr);
 }
 
+// ---------------------------------------------------------------------------
+// Open whatever the player's footer button points at: Settings, or the
+// Playlist / Browse page the user came from. Triggered by X or a footer tap.
+// ---------------------------------------------------------------------------
+static void openPlayerRightPage() {
+    if (g_player_right_dest == PlayerRightDest::Playlist) {
+        /* swapTo replaces MainGui with SettingsGui, then changeTo stacks
+           PlaylistGui on top: [SettingsGui, PlaylistGui].
+           B on Playlist → [SettingsGui] → B closes. */
+        play_ctx::poll();
+        tsl::swapTo<SettingsGui>();
+        tsl::changeTo<PlaylistGui>(nullptr);
+    } else if (g_player_right_dest == PlayerRightDest::Browse) {
+        /* Return to the exact directory the user was browsing, not the
+           currently-playing folder. */
+        play_ctx::poll();
+        tsl::swapTo<SettingsGui>();
+        pushBrowserStack();
+    } else {
+        tsl::swapTo<SettingsGui>();
+    }
+    triggerNavigationFeedback();
+}
+
 // =============================================================================
 // MainGui  (Page 0 — Player)
 // =============================================================================
@@ -238,6 +262,7 @@ MainGui::MainGui() {
 }
 
 MainGui::~MainGui() {
+    blockShoulderJump.store(false, std::memory_order_release);
     // m_list cascade-deletes all its children, including m_status_bar.
     // m_frame is owned by Tesla — do NOT delete here.
     delete m_list;
@@ -254,27 +279,6 @@ tsl::elm::Element* MainGui::createUI() {
     m_list = new tsl::elm::List();
     m_list->addItem(m_status_bar, StatusBar::PreferredHeight(tsl::cfg::FramebufferWidth - 85));
 
-    m_status_bar->setPageRightCallback([] {
-        g_player_r_held.store(false, std::memory_order_release);
-        if (g_player_right_dest == PlayerRightDest::Playlist) {
-            /* swapTo replaces MainGui with SettingsGui, then changeTo stacks
-               PlaylistGui on top: [SettingsGui, PlaylistGui].
-               B on Playlist → [SettingsGui] → B closes. */
-            play_ctx::poll();
-            tsl::swapTo<SettingsGui>();
-            tsl::changeTo<PlaylistGui>(nullptr);
-        } else if (g_player_right_dest == PlayerRightDest::Browse) {
-            /* Return to the exact directory the user was browsing, not the
-               currently-playing folder. */
-            play_ctx::poll();
-            tsl::swapTo<SettingsGui>();
-            pushBrowserStack();
-        } else {
-            tsl::swapTo<SettingsGui>();
-        }
-        triggerNavigationFeedback();
-    });
-
     // Pre-warm before the first draw so m_playing and m_percentage are already
     // correct on frame 0 — prevents the 0:00 flicker when swapping back from Settings.
     m_status_bar->update();
@@ -286,6 +290,9 @@ tsl::elm::Element* MainGui::createUI() {
 // ---------------------------------------------------------------------------
 void MainGui::update() {
     i18n::syncFromConfig();
+    // L / R / ZR are player shortcuts here, so stop Tesla from also treating
+    // them as "jump to top / bottom" list navigation.
+    blockShoulderJump.store(true, std::memory_order_release);
     static bool s_whats_new_shown = false;
     if (!s_whats_new_shown) {
         s_whats_new_shown = true;
@@ -331,69 +338,38 @@ bool MainGui::handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touch
 
     if (m_status_bar->hasFocus())
         m_status_bar->onHeld(keysHeld);
-    else
-        g_player_r_held.store(false, std::memory_order_release);
 
+    // Footer tap on the right-hand button.
     if (ult::simulatedNextPage.exchange(false, std::memory_order_acq_rel)) {
-        g_player_r_held.store(false, std::memory_order_release);
-        if (g_player_right_dest == PlayerRightDest::Playlist) {
-            play_ctx::poll();
-            tsl::swapTo<SettingsGui>();
-            tsl::changeTo<PlaylistGui>(nullptr);
-        } else if (g_player_right_dest == PlayerRightDest::Browse) {
-            play_ctx::poll();
-            tsl::swapTo<SettingsGui>();
-            pushBrowserStack();
-        } else {
-            tsl::swapTo<SettingsGui>();
-        }
-        triggerNavigationFeedback();
+        openPlayerRightPage();
         return true;
     }
 
     if (SysTuneGui::handleInput(keysDown, keysHeld, touchPos, joyStickPosLeft, joyStickPosRight))
         return true;
 
-    /* KEY_R + RIGHT/LEFT while status bar is focused: bypass cursor movement
-       and navigate pages directly — same destinations as normal page nav. */
-    if (m_status_bar->hasFocus() && (keysHeld & KEY_R)) {
-        if ((keysDown & KEY_RIGHT) && !(keysHeld & ~KEY_RIGHT & ~KEY_R & ALL_KEYS_MASK)) {
-            g_player_r_held.store(false, std::memory_order_release);
-            if (g_player_right_dest == PlayerRightDest::Playlist) {
-                play_ctx::poll();
-                tsl::swapTo<SettingsGui>();
-                tsl::changeTo<PlaylistGui>(nullptr);
-            } else if (g_player_right_dest == PlayerRightDest::Browse) {
-                play_ctx::poll();
-                tsl::swapTo<SettingsGui>();
-                pushBrowserStack();
-            } else {
-                tsl::swapTo<SettingsGui>();
-            }
-            triggerNavigationFeedback();
-            return true;
-        }
-    }
+    // Player shortcuts. Each only fires when pressed on its own, so they never
+    // clash with button combos:
+    //   X  — open Settings (or the Playlist / Browse page you came from)
+    //   L  — previous track        R  — next track        ZR — play / pause
+    const auto pressedAlone = [&](u64 key) {
+        return (keysDown & key) && !(keysHeld & ~key & ALL_KEYS_MASK);
+    };
 
-    if ((keysDown & KEY_RIGHT)
-        && !(keysHeld & ~KEY_RIGHT & ALL_KEYS_MASK)
-        && !m_status_bar->hasFocus()
-        && !(ult::onTrackBar.load(std::memory_order_acquire)
-             && (ult::unlockedSlide.load(std::memory_order_acquire) || ult::allowSlide.load(std::memory_order_acquire))
-             && !(keysHeld & KEY_R))) {
-        g_player_r_held.store(false, std::memory_order_release);
-        if (g_player_right_dest == PlayerRightDest::Playlist) {
-            play_ctx::poll();
-            tsl::swapTo<SettingsGui>();
-            tsl::changeTo<PlaylistGui>(nullptr);
-        } else if (g_player_right_dest == PlayerRightDest::Browse) {
-            play_ctx::poll();
-            tsl::swapTo<SettingsGui>();
-            pushBrowserStack();
-        } else {
-            tsl::swapTo<SettingsGui>();
-        }
-        triggerNavigationFeedback();
+    if (pressedAlone(KEY_X)) {
+        openPlayerRightPage();
+        return true;
+    }
+    if (pressedAlone(KEY_L)) {
+        m_status_bar->hotkeyPrev();
+        return true;
+    }
+    if (pressedAlone(KEY_R)) {
+        m_status_bar->hotkeyNext();
+        return true;
+    }
+    if (pressedAlone(KEY_ZR)) {
+        m_status_bar->hotkeyPlayPause();
         return true;
     }
 
@@ -445,6 +421,7 @@ tsl::elm::Element* LanguageGui::createUI() {
             return false;
         });
         m_list->addItem(item);
+        m_frame->addHint(item, i18n::Hint::LanguageOption);
     }
 
     m_frame->setContent(m_list);
@@ -487,6 +464,7 @@ tsl::elm::Element* StartupSettingsGui::createUI() {
         applyStartupPolicy(policy);
     });
     m_list->addItem(auto_play);
+    m_frame->addHint(auto_play, i18n::Hint::StartupAutoPlay);
 
     auto *wait_home = new tsl::elm::CompactToggleListItem(
         i18n::t(i18n::Str::WaitForHome), initial.wait_for_home,
@@ -497,6 +475,7 @@ tsl::elm::Element* StartupSettingsGui::createUI() {
         applyStartupPolicy(policy);
     });
     m_list->addItem(wait_home);
+    m_frame->addHint(wait_home, i18n::Hint::StartupWaitHome);
 
     auto *keyboard = new tsl::elm::CompactToggleListItem(
         i18n::t(i18n::Str::PauseOnKeyboard), initial.pause_on_keyboard,
@@ -507,6 +486,7 @@ tsl::elm::Element* StartupSettingsGui::createUI() {
         applyStartupPolicy(policy);
     });
     m_list->addItem(keyboard);
+    m_frame->addHint(keyboard, i18n::Hint::StartupPauseKeyboard);
 
     auto *controller_sync = new tsl::elm::CompactToggleListItem(
         i18n::t(i18n::Str::PauseOnControllerSync), initial.pause_on_controller_sync,
@@ -517,6 +497,7 @@ tsl::elm::Element* StartupSettingsGui::createUI() {
         applyStartupPolicy(policy);
     });
     m_list->addItem(controller_sync);
+    m_frame->addHint(controller_sync, i18n::Hint::StartupPauseController);
 
     auto *lockscreen = new tsl::elm::CompactToggleListItem(
         i18n::t(i18n::Str::PauseOnLockscreen), initial.pause_on_lockscreen,
@@ -527,6 +508,7 @@ tsl::elm::Element* StartupSettingsGui::createUI() {
         applyStartupPolicy(policy);
     });
     m_list->addItem(lockscreen);
+    m_frame->addHint(lockscreen, i18n::Hint::StartupPauseLockscreen);
 
     auto *remove_startup = new tsl::elm::CompactListItem(i18n::t(i18n::Str::RemoveStartup));
     remove_startup->setClickListener([](u64 keys) -> bool {
@@ -546,6 +528,7 @@ tsl::elm::Element* StartupSettingsGui::createUI() {
         return true;
     });
     m_list->addItem(remove_startup);
+    m_frame->addHint(remove_startup, i18n::Hint::StartupRemove);
 
     m_frame->setContent(m_list);
     return m_frame;
@@ -666,6 +649,7 @@ tsl::elm::Element* EqualizerGui::createUI() {
         tunerGains, equalizerBandLabels(),
         [this](std::size_t band, s8 gain) { setBandGain(band, gain); });
     m_list->addItem(m_tuner, 226);
+    m_frame->addHint(m_tuner, i18n::Hint::EqTuner);
 
     m_list->addItem(new tsl::elm::CompactCategoryHeader(
         sectionTitle("A edit/B done · L/R band · ↑/↓ gain", "Music DSP · Game/System output")));
@@ -682,6 +666,7 @@ tsl::elm::Element* EqualizerGui::createUI() {
         }
     });
     m_list->addItem(m_enable_toggle);
+    m_frame->addHint(m_enable_toggle, i18n::Hint::EqEnable);
 
     m_target_item = new tsl::elm::CompactListItem(
         i18n::text("Target"), equalizerTargetLabel(m_settings.target));
@@ -699,6 +684,7 @@ tsl::elm::Element* EqualizerGui::createUI() {
         return true;
     });
     m_list->addItem(m_target_item);
+    m_frame->addHint(m_target_item, i18n::Hint::EqTarget);
 
     m_preset_item = new tsl::elm::CompactListItem(i18n::text("Preset"));
     refreshPresetLabel();
@@ -712,6 +698,7 @@ tsl::elm::Element* EqualizerGui::createUI() {
         return true;
     });
     m_list->addItem(m_preset_item);
+    m_frame->addHint(m_preset_item, i18n::Hint::EqPreset);
 
     auto *reset = new tsl::elm::CompactListItem(
         i18n::text("Reset all"), "0 dB");
@@ -722,6 +709,7 @@ tsl::elm::Element* EqualizerGui::createUI() {
         return true;
     });
     m_list->addItem(reset);
+    m_frame->addHint(reset, i18n::Hint::EqReset);
 
     m_frame->setContent(m_list);
     return m_frame;
@@ -766,7 +754,8 @@ void SettingsGui::refreshPlaylistCount(u32 count) {
 // ---------------------------------------------------------------------------
 tsl::elm::Element* SettingsGui::createUI() {
     i18n::syncFromConfig();
-    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/i18n::t(i18n::Str::Player), /*pageRight=*/"");
+    // No footer page button here: B already returns to the player.
+    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
 
     u64 pid{}, tid{};
     pm::getCurrentPidTid(&pid, &tid);
@@ -812,6 +801,7 @@ tsl::elm::Element* SettingsGui::createUI() {
         return false;
     });
     m_list->addItem(m_queue_button);
+    m_frame->addHint(m_queue_button, i18n::Hint::PlaylistSlot);
 
     const std::string browseVal = (init_inFolder && init_hasTrack)
         ? ult::INPROGRESS_SYMBOL : ult::DROPDOWN_SYMBOL;
@@ -828,6 +818,7 @@ tsl::elm::Element* SettingsGui::createUI() {
         return false;
     });
     m_list->addItem(browser_button);
+    m_frame->addHint(browser_button, i18n::Hint::Browse);
 
     // ---- Volume ----
     m_list->addItem(new tsl::elm::CompactCategoryHeader(
@@ -876,6 +867,7 @@ tsl::elm::Element* SettingsGui::createUI() {
         &m_music_slider, &m_music_vol, &m_music_vol_backup,
         [](u8 v) { tuneSetVolume(float(v) / 100.f); }));
     m_list->addItem(tune_volume_slider);
+    m_frame->addHint(tune_volume_slider, i18n::Hint::MusicVolume);
     
     if (tid && pid) {
         auto title_volume_slider = new VolumeTrackBar("\uE13C", false, false, true, i18n::t(i18n::Str::Game), "%", false);
@@ -895,6 +887,7 @@ tsl::elm::Element* SettingsGui::createUI() {
                 config::set_title_volume(m_tid, fv);
             }));
         m_list->addItem(title_volume_slider);
+        m_frame->addHint(title_volume_slider, i18n::Hint::GameVolume);
     }
 
     // ---- Sound shaping ----
@@ -920,6 +913,7 @@ tsl::elm::Element* SettingsGui::createUI() {
         return false;
     });
     m_list->addItem(equalizer_item);
+    m_frame->addHint(equalizer_item, i18n::Hint::Equalizer);
     
 
     // ---- Auto Play ----
@@ -965,6 +959,7 @@ tsl::elm::Element* SettingsGui::createUI() {
                 tuneSetDefaultTitleVolume(fv);
             }));
         m_list->addItem(default_title_volume_slider);
+        m_frame->addHint(default_title_volume_slider, i18n::Hint::PresetVolume);
 
         // ---- Per-title start-up policy ----
         //
@@ -1006,6 +1001,7 @@ tsl::elm::Element* SettingsGui::createUI() {
             s_settings_rebuild_jump    = i18n::t(i18n::Str::DefaultFocus);
         });
         m_list->addItem(default_focus);
+        m_frame->addHint(default_focus, i18n::Hint::DefaultFocus);
 
         // Only expose the per-title override when the user has opted out
         // of the global default — keeps the list clean by default.
@@ -1050,6 +1046,7 @@ tsl::elm::Element* SettingsGui::createUI() {
                     return false;
                 });
             m_list->addItem(custom_focus);
+            m_frame->addHint(custom_focus, i18n::Hint::CustomFocus);
         }
     }
 
@@ -1083,6 +1080,7 @@ tsl::elm::Element* SettingsGui::createUI() {
             return true;
         });
         m_list->addItem(mode_item);
+        m_frame->addHint(mode_item, i18n::Hint::PlaybackMode);
     }
 
     if (tid && !at_home) {
@@ -1096,6 +1094,7 @@ tsl::elm::Element* SettingsGui::createUI() {
             requestDeferredSettingsRebuild(i18n::t(i18n::Str::WhitelistToggle));
         });
         m_list->addItem(whitelist_item);
+        m_frame->addHint(whitelist_item, i18n::Hint::WhitelistToggle);
 
         auto *blacklist_item = new tsl::elm::CompactToggleListItem(
             i18n::t(i18n::Str::BlacklistToggle), config::is_tid_blacklisted(tid), i18n::t(i18n::Str::On), i18n::t(i18n::Str::Off));
@@ -1107,6 +1106,7 @@ tsl::elm::Element* SettingsGui::createUI() {
             requestDeferredSettingsRebuild(i18n::t(i18n::Str::BlacklistToggle));
         });
         m_list->addItem(blacklist_item);
+        m_frame->addHint(blacklist_item, i18n::Hint::BlacklistToggle);
     }
 
     {
@@ -1123,6 +1123,7 @@ tsl::elm::Element* SettingsGui::createUI() {
             });
         m_language_button = language_item;
         m_list->addItem(language_item);
+        m_frame->addHint(language_item, i18n::Hint::Language);
     }
 
     // Title Focus — global default applied to any title whose per-title
@@ -1177,6 +1178,7 @@ tsl::elm::Element* SettingsGui::createUI() {
                 return false;
             });
         m_list->addItem(title_focus);
+        m_frame->addHint(title_focus, i18n::Hint::TitleFocus);
     }
 
     // Home Focus — cycling tri-state for the HOME menu press.
@@ -1225,6 +1227,7 @@ tsl::elm::Element* SettingsGui::createUI() {
                 return false;
             });
         m_list->addItem(home_focus);
+        m_frame->addHint(home_focus, i18n::Hint::HomeFocus);
     }
 
     // Keep all boot and system-UI playback policies behind one deliberate
@@ -1240,6 +1243,7 @@ tsl::elm::Element* SettingsGui::createUI() {
         return false;
     });
     m_list->addItem(startup_settings);
+    m_frame->addHint(startup_settings, i18n::Hint::StartupSettings);
 
     auto exit_button = new tsl::elm::CompactSilentListItem(i18n::t(i18n::Str::StopDferTune));
     exit_button->setValue("\uE071", true);
@@ -1253,6 +1257,7 @@ tsl::elm::Element* SettingsGui::createUI() {
         return false;
     });
     m_list->addItem(exit_button);
+    m_frame->addHint(exit_button, i18n::Hint::StopDferTune);
 
     m_frame->setContent(m_list);
 

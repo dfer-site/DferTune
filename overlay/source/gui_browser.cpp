@@ -305,8 +305,10 @@ void BrowserGui::notifyCountChanged() const {
 
 tsl::elm::Element *BrowserGui::createUI() {
     i18n::syncFromConfig();
-    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/i18n::t(i18n::Str::Player), /*pageRight=*/"");
+    // No footer page button: B walks back up to Settings, and from there to the player.
+    m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
     m_list  = new tsl::elm::List();
+    m_frame->addListHint(m_list, i18n::Hint::BrowserRow);
 
     buildList();
 
@@ -659,27 +661,29 @@ void BrowserGui::buildList() {
                 }
 
                 // ---- Y: add to playlist (saved[], and IPC when in Playlist ctx)
+                // Same file name already listed -> the new path overwrites it;
+                // the very same file -> nothing is added twice.
                 if (down & HidNpadButton_Y) {
                     //tsl::shiftItemFocus(item);
-                    if (play_ctx::source() == play_ctx::Source::Playlist) {
-                        // Playlist context — add to IPC and saved[] together.
-                        Result r = tuneEnqueue(full_path.c_str(), TuneEnqueueType_Back);
-                        if (R_SUCCEEDED(r)) {
-                            play_ctx::savedAppend(full_path);
-                            if (tsl::notification)
+                    if (tsl::notification) {
+                        switch (play_ctx::addTrackUnique(full_path)) {
+                            case play_ctx::AddResult::Added:
                                 tsl::notification->showNow(i18n::t(i18n::Str::AddedOneTrack));
-                            notifyCountChanged();
-                        } else {
-                            if (tsl::notification)
+                                break;
+                            case play_ctx::AddResult::Replaced:
+                                tsl::notification->showNow(i18n::t(i18n::Str::ReplacedOneTrack));
+                                break;
+                            case play_ctx::AddResult::Skipped:
+                                tsl::notification->showNow(i18n::t(i18n::Str::TrackAlreadyAdded));
+                                break;
+                            case play_ctx::AddResult::Failed:
                                 tsl::notification->showNow(i18n::t(i18n::Str::FailedAddTrack));
+                                break;
                         }
                     } else {
-                        // Folder context — IPC has folder songs; only update saved[].
-                        play_ctx::savedAppend(full_path);
-                        if (tsl::notification)
-                            tsl::notification->showNow(i18n::t(i18n::Str::AddedOneTrack));
-                        notifyCountChanged();
+                        play_ctx::addTrackUnique(full_path);
                     }
+                    notifyCountChanged();
                     return true;
                 }
 
@@ -790,27 +794,29 @@ void BrowserGui::addAllToPlaylist(const std::string &path) {
 
     std::sort(file_list.begin(), file_list.end(), StringTextCompare);
 
-    s64 songs_added = 0;
-    const bool inPlaylist = (play_ctx::source() == play_ctx::Source::Playlist);
-    Result rc = 0;
+    // Each file goes through addTrackUnique: files already listed are skipped
+    // and same-name files overwrite the older entry, so repeated imports of the
+    // same folder never pile up duplicates.
+    s64 added = 0, replaced = 0, skipped = 0;
 
     for (const auto &file : file_list) {
-        const std::string full = path + file;
-
-        if (inPlaylist) {
-            rc = tuneEnqueue(full.c_str(), TuneEnqueueType_Back);
-            if (R_SUCCEEDED(rc)) {
-                play_ctx::savedAppend(full);
-                songs_added++;
-            }
-        } else {
-            play_ctx::savedAppend(full);
-            songs_added++;
+        switch (play_ctx::addTrackUnique(path + file)) {
+            case play_ctx::AddResult::Added:    ++added;    break;
+            case play_ctx::AddResult::Replaced: ++replaced; break;
+            case play_ctx::AddResult::Skipped:  ++skipped;  break;
+            case play_ctx::AddResult::Failed:   break;
         }
     }
 
-    char msg[96];
-    std::snprintf(msg, sizeof(msg), i18n::t(i18n::Str::AddedManyTracksFmt), static_cast<long long>(songs_added));
+    const s64 songs_added = added + replaced;
+    char msg[128];
+    if (replaced == 0 && skipped == 0) {
+        std::snprintf(msg, sizeof(msg), i18n::t(i18n::Str::AddedManyTracksFmt), static_cast<long long>(added));
+    } else {
+        std::snprintf(msg, sizeof(msg), i18n::t(i18n::Str::AddedManyTracksDedupFmt),
+                      static_cast<long long>(added), static_cast<long long>(replaced),
+                      static_cast<long long>(skipped));
+    }
     if (tsl::notification) tsl::notification->showNow(msg);
     if (songs_added > 0)
         notifyCountChanged();
