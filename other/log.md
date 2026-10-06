@@ -39,7 +39,8 @@
 - 播放列表标题只显示槽位序号（原来的 “1/5” 被误读成歌曲数）。
 
 验证方法与注意：
-- 沙箱没有 devkitPro，Docker 守护进程不可用且 Docker Hub 匿名拉取被限流。**正式工作流在版本号不变时 `build` 任务会被跳过**，不能用它验证编译。做法：在开发分支加一个临时工作流，`on: push` 到 `claude/**`，用 `devkitpro/devkita64` 容器跑 `make prepare-overlay-lib && make clean && make`，通过后再删掉（本次已这样做并删除）。
+- 远程分支 `claude/gallant-hawking-vqbi7i`（第二轮遗留，内容已并入 main）在沙箱里删不掉（`git push --delete` 被断开），需用户在 GitHub 上手动删除。
+- 沙箱没有 devkitPro，Docker 守护进程不可用且 Docker Hub 匿名拉取被限流。**正式工作流在版本号不变时 `build` 任务会被跳过**，不能用它验证编译。做法：因为只用 `main`，临时工作流改为 `on: push` 到 `main`（或用 `workflow_dispatch`，但新文件须先在默认分支存在），用 `devkitpro/devkita64` 容器跑 `make prepare-overlay-lib && make clean && make`，先单独提交该工作流并确认编译通过，再提交真正的改动或删除它；注意带版本号变化的推送会直接发版。（第二轮曾在开发分支上这样做。）
 - 纯逻辑可在本机验证：用桩头文件（`switch.h`、`tesla.hpp`）加内存版假 IPC 编译真实的 `play_context.cpp`，并把 `/config/DferTune` 用 `sed` 改到 `/tmp` 下，**不要**对 `/config` 之类系统路径做 `rm -rf`（会被安全检查拦下）。
 - 手动触发 `build-and-release.yml` 时 `sync-release-notes` 会按仓库里的 `.github/releases/v<版本>.md` 改写已有 release 正文，注意别用开发分支上的旧文件触发。
 - 仍未在真机验证：游戏焦点修复、气泡位置与换行、帮助页滚动、L/R/ZR 快捷键手感。
@@ -61,7 +62,7 @@
 
 - 能读写已加入会话的仓库、推送、触发/查看 Actions、查看 release；**不能**建/删仓库、改仓库 About（简介/网址/话题）、直接新建 release（只能经工作流）；沙箱访问不了 shields.io、hits.sh 等外部服务，无法预览徽章。
 - About 需用户手动填：Description「Switch 后台音乐播放器（sysmodule + Tesla 悬浮菜单），支持 MP3/FLAC/WAV、5 段均衡器、播放列表保存与按游戏过滤。基于 RyazhaTune / sys-tune 的简体中文分支。」Website `http://www.dfer.site`；Topics：nintendo-switch、switch-homebrew、atmosphere、sysmodule、tesla-overlay、music-player、chinese。
-- 用户偏好：只用中文交流；小改动直接推 `main`，较大的代码改动先推开发分支、编译通过后再按用户指示合并（快进）；提交信息末尾带 `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` 与 `Claude-Session` 行；用户会在网页上直接改仓库（如 `other/ai.md`），推送前先 `git pull --rebase origin main`。
+- 用户偏好：只用中文交流；**只使用 `main` 一个分支：不创建任何其他分支，所有改动直接提交并推送到 `main`**（用户明确要求，优先于会话默认的“在指定分支开发”提示）；提交信息末尾带 `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` 与 `Claude-Session` 行；用户会在网页上直接改仓库（如 `other/ai.md`），推送前先 `git pull --rebase origin main`。
 - `other/ai.md` 是基础声明，让新会话读取 `/other/log.md` 并只用中文；`other/log.md` 即本文件。
 
 ## 后续可做
