@@ -1,4 +1,4 @@
-name: "Автоматическая сборка и релиз DferTune"
+name: "DferTune 自动构建与发布"
 
 
 
@@ -33,7 +33,7 @@ jobs:
       version_changed: ${{ steps.check.outputs.CHANGED }}
       new_version: ${{ steps.version.outputs.VERSION }}
     steps:
-      - name: Получение исходного кода
+      - name: 检出源码
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -41,25 +41,25 @@ jobs:
 
 
 
-      - name: Настройка безопасного Git каталога
+      - name: 配置 Git 安全目录
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
 
 
 
-      - name: Проверка согласованности локализаций
+      - name: 检查本地化文件一致性
         run: node scripts/verify-localizations.mjs
 
 
 
 
-      - name: Проверка реализации issue №38
+      - name: 检查 issue #38 的实现
         run: node scripts/verify-issue-38.mjs
 
 
 
 
-      - name: Извлечение текущей версии из Makefile
+      - name: 从 Makefile 读取当前版本
         id: version
         run: |
           VERSION=$(grep "export VERSION" Makefile | sed 's/.*:= *//' | xargs)
@@ -68,7 +68,7 @@ jobs:
 
 
 
-      - name: Проверка изменения версии
+      - name: 检查版本是否变化
         id: check
         run: |
           CURRENT_VERSION='${{ steps.version.outputs.VERSION }}'
@@ -88,13 +88,13 @@ jobs:
     container:
       image: devkitpro/devkita64:latest
     steps:
-      - name: Установка зависимостей (jq)
+      - name: 安装依赖 (jq)
         run: apt-get update && apt-get install -y jq curl git
 
 
 
 
-      - name: Получение исходного кода
+      - name: 检出源码
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -102,70 +102,70 @@ jobs:
 
 
 
-      - name: Настройка безопасного Git каталога
+      - name: 配置 Git 安全目录
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
 
 
 
-      - name: Проверка языковых файлов
+      - name: 检查语言文件
         run: |
           if [ -d "overlay/lang" ]; then
-            echo "Языковые файлы найдены."
+            echo "已找到语言文件。"
           else
-            echo "Ошибка: Директория overlay/lang не найдена!"
+            echo "错误:未找到 overlay/lang 目录!"
             exit 1
           fi
 
 
 
 
-      - name: Подготовка библиотек
+      - name: 准备依赖库
         run: make prepare-overlay-lib
 
 
 
 
-      - name: Сборка проекта
+      - name: 构建项目
         run: make clean && make -j$(nproc)
 
 
 
 
-      - name: Проверка целостности сборки
+      - name: 检查构建产物
         run: |
           if [ -f "DferTune/DferTune.nsp" ] && [ -f "overlay/DferTune-Overlay.ovl" ]; then
-            echo "Сборка успешно завершена."
+            echo "构建成功。"
           else
-            echo "Ошибка: Файлы сборки не найдены!"
+            echo "错误:未找到构建产物!"
             ls -R
             exit 1
           fi
 
-      - name: Подготовка архива DferTune.zip
+      - name: 打包 DferTune.zip
         run: |
           mkdir -p release/atmosphere/contents/420000000000000F/flags
           mkdir -p release/config/DferTune
           mkdir -p release/switch/.overlays
 
-          # 1. Атмосфера (модуль)
+          # 1. Atmosphere 模块
           touch release/atmosphere/contents/420000000000000F/flags/boot2.flag
           cp DferTune/DferTune.nsp release/atmosphere/contents/420000000000000F/exefs.nsp
           cp DferTune/toolbox.json release/atmosphere/contents/420000000000000F/
 
-          # 2. Конфиги и языки
+          # 2. 配置与语言文件
           if [ -d "overlay/lang" ]; then
             cp -r overlay/lang release/config/DferTune/
           fi
           cp .github/default-config.ini release/config/DferTune/config.ini
 
-          # 3. Оверлей
+          # 3. 悬浮菜单
           cp overlay/DferTune-Overlay.ovl release/switch/.overlays/
 
-          # Упаковка
+          # 打包
           cd release && zip -r ../DferTune.zip . && cd ..
 
-      - name: Формирование текста релиза
+      - name: 生成发布说明
         id: changelog
         run: |
           git fetch --tags
@@ -185,40 +185,40 @@ jobs:
           CHANGED_FILES=$(git diff --name-only "$DIFF_RANGE" | sed -n '1,30s/^/- /p' || true)
           RAW_LOG=$(git log "$RANGE" --no-merges --pretty=format:"%s" | grep -Evi "^merge|update workflow|fix yaml" | head -n 50)
 
-          [[ -z "$COMMITS" ]] && COMMITS="- Нет значимых коммитов в данном диапазоне."
-          [[ -z "$FILE_STATS" ]] && FILE_STATS="Изменений в файлах не зафиксировано."
-          [[ -z "$CHANGED_FILES" ]] && CHANGED_FILES="- Список файлов пуст."
+          [[ -z "$COMMITS" ]] && COMMITS="- 此范围内没有重要提交。"
+          [[ -z "$FILE_STATS" ]] && FILE_STATS="未检测到文件改动。"
+          [[ -z "$CHANGED_FILES" ]] && CHANGED_FILES="- 文件列表为空。"
 
           if [[ -n "$RAW_LOG" ]]; then
             CHANGELOG_SECTIONS=$(echo "$RAW_LOG" | awk '
               BEGIN{new="";impr="";fix=""}
               {l=tolower($0)}
-              l ~ /(add|feature|нов|support|lang|созд)/ {new=new "- " $0 "\n"; next}
-              l ~ /(fix|bug|crash|error|исправ|почин|ошиб)/ {fix=fix "- " $0 "\n"; next}
+              l ~ /(add|feature|support|lang|新增|新功能|支持|添加)/ {new=new "- " $0 "\n"; next}
+              l ~ /(fix|bug|crash|error|修复|崩溃|错误)/ {fix=fix "- " $0 "\n"; next}
               {impr=impr "- " $0 "\n"}
               END{
-                if(new!="") printf "### Новое\n%s\n", new;
-                if(impr!="") printf "### Улучшения\n%s\n", impr;
-                if(fix!="") printf "### Исправления\n%s\n", fix;
+                if(new!="") printf "### 新增\n%s\n", new;
+                if(impr!="") printf "### 改进\n%s\n", impr;
+                if(fix!="") printf "### 修复\n%s\n", fix;
               }')
           else
-            CHANGELOG_SECTIONS="- Внутренние технические изменения."
+            CHANGELOG_SECTIONS="- 内部技术性改动。"
           fi
 
           {
             echo "RELEASE_BODY<<EOF"
-            echo "## Список изменений"
+            echo "## 更新内容"
             echo ""
             echo "$CHANGELOG_SECTIONS"
             echo ""
-            echo "### Технические детали"
-            echo "- Версия: $CURRENT_VERSION"
-            echo "- Диапазон: \`$RANGE\`"
-            echo "- Статистика: $FILE_STATS"
+            echo "### 技术细节"
+            echo "- 版本:$CURRENT_VERSION"
+            echo "- 范围:\`$RANGE\`"
+            echo "- 统计:$FILE_STATS"
             echo "EOF"
           } >> "$GITHUB_ENV"
 
-      - name: Подготовка итогового описания релиза
+      - name: 准备最终发布说明
         run: |
           NOTES_FILE=".github/releases/v${{ needs.check-version.outputs.new_version }}.md"
           if [[ -f "$NOTES_FILE" ]]; then
@@ -228,11 +228,11 @@ jobs:
               printf '%s\n' "$RELEASE_BODY"
               echo
               echo '---'
-              echo '_Описание подготовлено по фактическим изменениям релиза._'
+              echo '_本说明根据此次发布的实际改动生成。_'
             } > .release-body.md
           fi
 
-      - name: Создание тега и релиза
+      - name: 创建标签并发布
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.check-version.outputs.new_version }}
@@ -249,10 +249,10 @@ jobs:
     if: needs.check-version.outputs.version_changed == 'false'
     runs-on: ubuntu-latest
     steps:
-      - name: Получение исходного кода
+      - name: 检出源码
         uses: actions/checkout@v7
 
-      - name: Проверка подготовленного описания
+      - name: 检查预先准备的发布说明
         id: notes
         run: |
           NOTES_FILE=".github/releases/v${{ needs.check-version.outputs.new_version }}.md"
@@ -262,7 +262,7 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Обновление описания существующего релиза
+      - name: 更新已有发布的说明
         if: steps.notes.outputs.exists == 'true'
         uses: softprops/action-gh-release@v3
         with:

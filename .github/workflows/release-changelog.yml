@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !github.event.release.draft }}
     steps:
-      - name: Установка jq
+      - name: 安装 jq
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
       - name: Checkout code
@@ -28,10 +28,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Настройка безопасного Git каталога
+      - name: 配置 Git 安全目录
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Сформировать текст релиза (AI + structured fallback)
+      - name: 生成发布说明(AI,失败时使用结构化备用方案)
         id: changelog
         run: |
           CURRENT_TAG='${{ github.event.release.tag_name }}'
@@ -52,20 +52,20 @@ jobs:
           RAW_LOG=$(git log "$RANGE" --no-merges --pretty=format:"%s" | grep -Evi "^merge|update workflow|fix yaml" | head -n 40)
 
           if [[ -n "${OPENROUTER_API_KEY}" && -n "$RAW_LOG" ]]; then
-            PROMPT="Ты — release-manager проекта DferTune. Напиши релиз-ноты на русском языке в markdown.
-            Формат и правила:
-            1) Короткое вступление (1-2 предложения).
-            2) Разделы по порядку (добавляй только релевантные):
-               - ## Новое
-               - ## Улучшения
-               - ## Исправления
-               - ## Совместимость и миграция
-            3) Только значимые изменения для пользователей.
-            4) Не копируй коммиты дословно, обобщай по смыслу.
-            5) Не упоминай ИИ/автогенерацию.
-            6) Объём: 120-260 слов.
+            PROMPT="你是 DferTune 项目的发布负责人。请用简体中文以 markdown 格式撰写发布说明。
+            格式与规则:
+            1) 简短的开头(1-2 句)。
+            2) 按顺序列出以下章节(只写相关的):
+               - ## 新增
+               - ## 改进
+               - ## 修复
+               - ## 兼容性与迁移
+            3) 只写对用户有意义的改动。
+            4) 不要照抄提交信息,按含义归纳。
+            5) 不要提及 AI 或自动生成。
+            6) 篇幅:200-400 字。
 
-            Сырые сообщения коммитов (только как контекст):
+            原始提交信息(仅作参考):
             $RAW_LOG"
             
             PAYLOAD=$(jq -n \
@@ -74,7 +74,7 @@ jobs:
               '{
                 model: $model,
                 messages: [
-                  {role: "system", content: "Пиши только по-русски, структурно и по делу."},
+                  {role: "system", content: "只用简体中文,结构清晰,直截了当。"},
                   {role: "user", content: $prompt}
                 ],
                 temperature: 0.5
@@ -92,16 +92,16 @@ jobs:
             CHANGELOG_SECTIONS=$(echo "$RAW_LOG" | awk '
               BEGIN{new="";impr="";fix=""}
               {l=tolower($0)}
-              l ~ /(add|feature|нов|support|lang)/ {new=new "- " $0 "\n"; next}
-              l ~ /(fix|bug|crash|error|исправ|почин)/ {fix=fix "- " $0 "\n"; next}
+              l ~ /(add|feature|support|lang|新增|新功能|支持|添加)/ {new=new "- " $0 "\n"; next}
+              l ~ /(fix|bug|crash|error|修复|崩溃|错误)/ {fix=fix "- " $0 "\n"; next}
               {impr=impr "- " $0 "\n"}
               END{
-                if(new!="") printf "## Новое\n%s\n", new;
-                if(impr!="") printf "## Улучшения\n%s\n", impr;
-                if(fix!="") printf "## Исправления\n%s\n", fix;
+                if(new!="") printf "## 新增\n%s\n", new;
+                if(impr!="") printf "## 改进\n%s\n", impr;
+                if(fix!="") printf "## 修复\n%s\n", fix;
               }')
           else
-            CHANGELOG_SECTIONS="- Существенных пользовательских изменений в этом теге не обнаружено."
+            CHANGELOG_SECTIONS="- 此标签中没有发现对用户有意义的改动。"
           fi
 
           if [[ -n "${AI_BODY}" && "${AI_BODY}" != "null" ]]; then
@@ -113,20 +113,20 @@ jobs:
           else
             {
               echo "RELEASE_BODY<<EOF"
-              echo "👋 Привет! Готово новое обновление DferTune."
+              echo "👋 你好!DferTune 有新版本了。"
               echo
               echo "$CHANGELOG_SECTIONS"
               echo
-              echo "## Технические детали"
-              echo "- Релиз собран и упакован автоматически."
-              echo "- Описание собрано из фактических изменений кода за диапазон релиза."
+              echo "## 技术细节"
+              echo "- 本次发布由 CI 自动构建并打包。"
+              echo "- 说明根据此次发布范围内的实际代码改动整理。"
               echo
-              echo "Спасибо за использование DferTune! 🎧"
+              echo "感谢使用 DferTune! 🎧"
               echo "EOF"
             } >> "$GITHUB_ENV"
           fi
 
-      - name: Обновить описание релиза
+      - name: 更新发布说明
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.release.tag_name }}
@@ -134,6 +134,6 @@ jobs:
             ${{ env.RELEASE_BODY }}
 
             ---
-            _Описание подготовлено по фактическим изменениям релиза._
+            _本说明根据此次发布的实际改动生成。_
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

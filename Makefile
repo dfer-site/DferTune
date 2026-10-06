@@ -5,10 +5,10 @@ export WANT_FLAC 	:= 1
 export WANT_MP3 	:= 1
 export WANT_WAV 	:= 1
 
-# Используем закреплённую ревизию открытого libryazhahand владельца.
-# Этот pin содержит Switch 2 style renderer (ult::useSwitch2Style), который
-# используется оверлеем как штатная библиотечная возможность. Изменять pin
-# можно только вместе с полной devkitA64-проверкой CI.
+# 使用上游 libryazhahand 的固定提交。
+# 该提交包含 Switch 2 风格渲染器 (ult::useSwitch2Style),
+# 悬浮菜单将其作为库的标准功能使用。只有在完成
+# 完整的 devkitA64 CI 验证后,才能修改这个固定提交。
 LIBRYAZHAHAND_REPO ?= https://github.com/Dimasick-git/libryazhahand.git
 LIBRYAZHAHAND_PIN  ?= fd11fe0e31a3c73a293504710a8336a5c74d4254
 RYAZHAHAND_DIR     ?= overlay/lib/libryazhahand
