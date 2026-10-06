@@ -16,7 +16,8 @@
   4. 把旧式 GBK 编码的中文标签修成 Unicode,避免在 DferTune 里显示乱码。
   5. 每个文件夹最多放 300 首(DferTune 的"添加全部"只会添加前 300 首):
      前 300 首放在文件夹本身,之后依次放进 part02、part03……子文件夹。
-  6. 生成 对照表.csv(再次运行时合并更新),记录新旧文件名、歌名和歌手。
+  6. 生成 对照表.md(Markdown 表格,再次运行时合并更新),记录新旧文件名、歌名和歌手。
+     以前生成过的 对照表.csv 会在第一次运行时自动并入。
 
 用法:
   pip install mutagen
@@ -105,6 +106,61 @@ def process_tags(path: Path, stem: str):
     return read_title_artist_id3(audio.tags)
 
 
+MAPPING_NAME = "对照表.md"
+LEGACY_MAPPING_NAME = "对照表.csv"
+MAPPING_HEADER = ["新文件名", "原文件名", "歌名", "歌手"]
+
+
+def md_escape(text: str) -> str:
+    return text.replace("\\", "\\\\").replace("|", "\\|").replace("\r", " ").replace("\n", " ")
+
+
+def md_cells(line: str):
+    """把一行 Markdown 表格拆成单元格(支持 \\| 转义)。"""
+    body = line.strip()
+    if body.startswith("|"):
+        body = body[1:]
+    if body.endswith("|") and not body.endswith("\\|"):
+        body = body[:-1]
+    cells = re.split(r"(?<!\\)\|", body)
+    return [c.strip().replace("\\|", "|").replace("\\\\", "\\") for c in cells]
+
+
+def read_mapping(folder: Path) -> dict:
+    """读取已有的对照表:优先 对照表.md,没有时导入旧的 对照表.csv。"""
+    merged = {}
+    md_path, csv_path = folder / MAPPING_NAME, folder / LEGACY_MAPPING_NAME
+    if md_path.is_file():
+        for line in md_path.read_text(encoding="utf-8-sig").splitlines():
+            if not line.lstrip().startswith("|"):
+                continue
+            cells = md_cells(line)
+            if len(cells) < 3 or cells[0] == MAPPING_HEADER[0] or set(cells[0]) <= set("-: "):
+                continue
+            merged[cells[0]] = (cells[1], cells[2], cells[3] if len(cells) > 3 else "")
+    elif csv_path.is_file():
+        with open(csv_path, newline="", encoding="utf-8-sig") as fh:
+            for row in csv.DictReader(fh):
+                merged[row.get("新文件名", "")] = (row.get("原文件名", ""), row.get("歌名", ""), row.get("歌手", ""))
+    merged.pop("", None)
+    return {k.replace("\\", "/"): (o.replace("\\", "/"), t, a) for k, (o, t, a) in merged.items()}
+
+
+def write_mapping(folder: Path, merged: dict) -> None:
+    lines = [
+        "# DferTune 音乐对照表",
+        "",
+        "英文名副本和原文件的对应关系(由 music_to_ascii 自动生成,再次运行时合并更新)。",
+        "",
+        "| " + " | ".join(MAPPING_HEADER) + " |",
+        "|" + "---|" * len(MAPPING_HEADER),
+    ]
+    for name in sorted(merged):
+        original, title, artist = merged[name]
+        lines.append("| " + " | ".join(md_escape(x) for x in (name, original, title, artist)) + " |")
+    (folder / MAPPING_NAME).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def folder_for(target: Path, index: int) -> Path:
     """前 300 首放在目标文件夹本身,之后每 300 首一个 part02、part03……(与总数无关,序号稳定)。"""
     group = (index - 1) // CHUNK
@@ -170,24 +226,15 @@ def main() -> int:
                 title, artist = process_tags(dst, src.stem)
             except Exception as exc:  # 标签损坏的文件仍保留副本,只是不改标签
                 print(f"  警告:{src.name} 的标签处理失败({exc}),已保留副本")
-        rows[str(dst.relative_to(target))] = (str(src.relative_to(source)), title, artist)
+        rows[dst.relative_to(target).as_posix()] = (src.relative_to(source).as_posix(), title, artist)
         print(f"  [{status}] {dst.name}  <-  {src.relative_to(source)}")
 
     if not args.dry_run:
-        csv_path = target / "对照表.csv"
-        merged = {}
-        if csv_path.is_file():                        # 合并上次的记录
-            with open(csv_path, newline="", encoding="utf-8-sig") as fh:
-                for row in csv.DictReader(fh):
-                    merged[row.get("新文件名", "")] = (row.get("原文件名", ""), row.get("歌名", ""), row.get("歌手", ""))
+        merged = read_mapping(target)                 # 合并上次的记录
         merged.update(rows)
-        with open(csv_path, "w", newline="", encoding="utf-8-sig") as fh:
-            writer = csv.writer(fh)
-            writer.writerow(["新文件名", "原文件名", "歌名", "歌手"])
-            for name in sorted(merged):
-                writer.writerow([name, *merged[name]])
+        write_mapping(target, merged)
     print(f"\n完成:新增 {added} 首,覆盖 {replaced} 首。英文名副本在 {target}"
-          + ("" if args.dry_run else ";对照表.csv 里有新旧文件名。"))
+          + ("" if args.dry_run else f";{MAPPING_NAME} 里有新旧文件名。"))
     return 0
 
 

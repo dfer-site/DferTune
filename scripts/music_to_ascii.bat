@@ -28,6 +28,8 @@ exit /b %MTA_CODE%
 #  再次运行时同一首歌会覆盖上次生成的副本,新增的歌曲接在已有序号后面,
 #  已经转换好的文件不会被重复转换。中文名的原文件不会被改动或删除。
 #  每个文件夹最多放 300 首,更多的放进 part02、part03 子文件夹。
+#  同时生成 对照表.md(Markdown 表格,再次运行时合并更新),记录新旧文件名、歌名和歌手;
+#  以前生成过的 对照表.csv 会在第一次运行时自动并入。
 #
 #  注意:文件前半部分(给 cmd.exe 执行的命令行)只能用英文字符,
 #  写入中文会让 cmd.exe 把它当成命令执行而报错。中文说明和提示都在这个 PowerShell 部分。
@@ -140,6 +142,7 @@ function Update-Mp3Tag([string]$path, [string]$stem) {
     $ver = 3
     $audioStart = 0
     $title = ''
+    $script:lastArtist = ''
 
     if ($b.Length -ge 10 -and $b[0] -eq 0x49 -and $b[1] -eq 0x44 -and $b[2] -eq 0x33) {
         $ver = [int]$b[3]
@@ -166,6 +169,7 @@ function Update-Mp3Tag([string]$path, [string]$stem) {
 
             if ($isText) {
                 $text = Convert-TagText $data
+                if ($id -eq 'TPE1') { $script:lastArtist = $text }
                 if ($id -eq 'TIT2') {
                     if ($text.Trim().Length -eq 0) { $o += 10 + $fs; continue }   # 空歌名:丢掉,下面补上
                     $title = $text
@@ -193,6 +197,72 @@ function Update-Mp3Tag([string]$path, [string]$stem) {
     $out.Write($b, $audioStart, $b.Length - $audioStart)
     [IO.File]::WriteAllBytes($path, $out.ToArray())
     return $title
+}
+
+# ---- 对照表.md:Markdown 表格,再次运行时合并更新;第一次运行会并入以前生成的 对照表.csv ----
+$mappingHeader = @('新文件名', '原文件名', '歌名', '歌手')
+
+function ConvertTo-MdCell([string]$text) {
+    if ($text -eq $null) { return '' }
+    return $text.Replace('\', '\\').Replace('|', '\|').Replace("`r", ' ').Replace("`n", ' ')
+}
+
+function Split-MdRow([string]$line) {
+    $body = $line.Trim()
+    if ($body.StartsWith('|')) { $body = $body.Substring(1) }
+    if ($body.EndsWith('|') -and -not $body.EndsWith('\|')) { $body = $body.Substring(0, $body.Length - 1) }
+    $cells = [regex]::Split($body, '(?<!\\)\|')
+    return @($cells | ForEach-Object { $_.Trim().Replace('\|', '|').Replace('\\', '\') })
+}
+
+function New-MapRow([string]$name, [string]$original, [string]$title, [string]$artist) {
+    return [pscustomobject]@{
+        Name = $name.Replace('\', '/'); Original = $original.Replace('\', '/'); Title = $title; Artist = $artist
+    }
+}
+
+function Read-Mapping([string]$folder) {
+    $merged = @{}
+    $mdPath = Join-Path $folder '对照表.md'
+    $csvPath = Join-Path $folder '对照表.csv'
+    if (Test-Path -LiteralPath $mdPath) {
+        foreach ($line in [IO.File]::ReadAllLines($mdPath, [Text.Encoding]::UTF8)) {
+            if (-not $line.TrimStart().StartsWith('|')) { continue }
+            $c = @(Split-MdRow $line)
+            if ($c.Count -lt 3 -or $c[0] -eq '新文件名' -or $c[0] -match '^[-: ]+$') { continue }
+            $artist = ''
+            if ($c.Count -gt 3) { $artist = $c[3] }
+            $row = New-MapRow $c[0] $c[1] $c[2] $artist
+            $merged[$row.Name] = $row
+        }
+    }
+    elseif (Test-Path -LiteralPath $csvPath) {
+        foreach ($r in (Import-Csv -LiteralPath $csvPath -Encoding UTF8)) {
+            if ($r.'新文件名') {
+                $row = New-MapRow ([string]$r.'新文件名') ([string]$r.'原文件名') ([string]$r.'歌名') ([string]$r.'歌手')
+                $merged[$row.Name] = $row
+            }
+        }
+    }
+    return $merged
+}
+
+function Write-Mapping([string]$folder, $merged) {
+    $lines = New-Object 'System.Collections.Generic.List[string]'
+    $lines.Add('# DferTune 音乐对照表')
+    $lines.Add('')
+    $lines.Add('英文名副本和原文件的对应关系(由 music_to_ascii 自动生成,再次运行时合并更新)。')
+    $lines.Add('')
+    $lines.Add('| ' + ($mappingHeader -join ' | ') + ' |')
+    $lines.Add('|---|---|---|---|')
+    $keys = [string[]]@($merged.Keys)
+    [Array]::Sort($keys, [StringComparer]::Ordinal)
+    foreach ($k in $keys) {
+        $r = $merged[$k]
+        $cells = @((ConvertTo-MdCell $r.Name), (ConvertTo-MdCell $r.Original), (ConvertTo-MdCell $r.Title), (ConvertTo-MdCell $r.Artist))
+        $lines.Add('| ' + ($cells -join ' | ') + ' |')
+    }
+    [IO.File]::WriteAllText((Join-Path $folder '对照表.md'), (($lines -join "`n") + "`n"), (New-Object Text.UTF8Encoding($false)))
 }
 
 # 前 300 首放在文件夹本身,之后每 300 首一个 part02、part03 ……(与总数无关,序号稳定)
@@ -275,32 +345,29 @@ function Invoke-Main {
         Copy-Item -LiteralPath $f.FullName -Destination $dst -Force   # 同名直接覆盖
 
         $title = ''
+        $artist = ''
         if ($ext -eq '.mp3') {
             try {
                 $title = Update-Mp3Tag $dst $f.BaseName
+                $artist = $script:lastArtist
                 if ($title -eq $null) { $title = ''; Write-Host "  提示:$($f.Name) 的标签格式较特殊,已原样保留" }
             } catch {
                 Write-Host "  警告:$($f.Name) 的标签处理失败($($_.Exception.Message)),已保留副本"
             }
         }
         $rel = Get-Relative $dst $target
-        $rows[$rel] = [pscustomobject]@{ '新文件名' = $rel; '原文件名' = (Get-Relative $f.FullName $src); '歌名' = $title }
+        $row = New-MapRow $rel (Get-Relative $f.FullName $src) $title $artist
+        $rows[$row.Name] = $row
         Write-Host "  [$status] $(Split-Path -Leaf $dst)  <-  $($f.Name)"
     }
 
-    # 对照表.csv:合并上次的记录,本次处理过的条目更新
-    $csvPath = Join-Path $target '对照表.csv'
-    $merged = @{}
-    if (Test-Path -LiteralPath $csvPath) {
-        foreach ($r in (Import-Csv -LiteralPath $csvPath -Encoding UTF8)) {
-            if ($r.'新文件名') { $merged[$r.'新文件名'] = $r }
-        }
-    }
+    # 对照表.md:合并上次的记录,本次处理过的条目更新
+    $merged = Read-Mapping $target
     foreach ($k in $rows.Keys) { $merged[$k] = $rows[$k] }
-    $merged.Values | Sort-Object { $_.'新文件名' } | Export-Csv -LiteralPath $csvPath -NoTypeInformation -Encoding UTF8
+    Write-Mapping $target $merged
 
     Write-Host ''
-    Write-Host "完成:新增 $added 首,覆盖 $replaced 首。英文名副本就在 $target 里;对照表.csv 记录了新旧文件名。"
+    Write-Host "完成:新增 $added 首,覆盖 $replaced 首。英文名副本就在 $target 里;对照表.md 记录了新旧文件名。"
     Write-Host '你的中文名原文件没有被改动;确认英文名副本正常后,可以把原文件删掉。'
     if (@($files | Where-Object { $_.Extension.ToLowerInvariant() -ne '.mp3' }).Count -gt 0) {
         Write-Host '注意:flac / wav 只改了文件名,没有处理标签。它们的歌名会显示成英文文件名;需要处理请改用 music_to_ascii.py。'
