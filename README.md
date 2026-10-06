@@ -102,6 +102,37 @@ DferTune 是 Nintendo Switch 的后台音乐播放器(sysmodule + Tesla 悬浮�
 - **想保留原有设置**:更新时不要覆盖 `/config/DferTune/config.ini`。
 - DferTune 使用独立的 Title ID(`0x420000000000000F`)和配置目录(`/config/DferTune/`),不会覆盖原版 sys-tune 或 RyazhaTune。同时运行多个后台音乐模块会互相争抢音频,建议只启用其中一个。
 
+## 卸载
+
+DferTune 只会在 SD 卡上占用下面三处位置,没有写入系统存储,删掉即可完全卸载。
+
+| 位置 | 内容 | 是否必须删除 |
+|---|---|---|
+| `/atmosphere/contents/420000000000000F/` | 后台模块(含 `boot2.flag`) | **必须**,否则开机仍会自启 |
+| `/switch/.overlays/DferTune-Overlay.ovl` | 悬浮菜单插件 | **必须**,否则 Tesla 里仍显示 DferTune |
+| `/config/DferTune/` | 设置、语言文件、保存的播放列表 | 可选,想彻底清理时再删 |
+
+你的音乐文件(如 `/music/`)不属于 DferTune,不会被动到,也不需要删除。
+
+### 卸载步骤
+
+1. **关机**,把 SD 卡取出插到电脑(或在 Hekate 里用 USB 大容量存储模式连接电脑)。不要在后台模块运行时从系统内删除,以免文件被占用。
+2. 打开电脑上的"显示隐藏文件",因为 `switch/.overlays/` 里的 `.overlays` 是隐藏文件夹。
+3. 删除整个文件夹 `atmosphere/contents/420000000000000F/`。
+4. 删除文件 `switch/.overlays/DferTune-Overlay.ovl`。
+5. (可选)删除整个文件夹 `config/DferTune/`。**这会同时删掉你的设置和保存的播放列表**,之后无法恢复;打算以后重装并想保留设置的话,请先备份其中的 `config.ini` 和 `saved_playlist*.txt`。
+6. 把 SD 卡放回 Switch,**完整重启** Atmosphère(关机后重新进入系统)。重启后 Tesla 菜单里不应再出现 DferTune。
+
+### 只想暂时停用
+
+不想删除文件、只想让它不再开机自启:删除 `atmosphere/contents/420000000000000F/flags/boot2.flag` 并重启即可。想恢复时,在同一位置新建一个同名空文件(`boot2.flag`),再重启。此时悬浮菜单仍会出现在 Tesla 里,但因为后台模块没有运行,打开后无法控制播放。
+
+### 卸载注意事项
+
+- 只删上表中的三处。不要删 `/atmosphere/contents/` 下其他以数字和字母命名的文件夹,它们属于其他模块。
+- DferTune 使用独立的 Title ID 和配置目录,卸载不会影响并存的 sys-tune 或 RyazhaTune。
+- 确认 `420000000000000F` 这串编号完全一致后再删,不要整个删除 `atmosphere/contents/`。
+
 ## 项目结构
 
 - **DferTune/**:后台系统模块,负责解码并通过 `audren` 服务播放音频。
