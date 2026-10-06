@@ -26,12 +26,50 @@ DferTune 是 Nintendo Switch 的后台音乐播放器(sysmodule + Tesla 悬浮�
 
 ## 安装
 
-1. 从本仓库的 [Releases](https://github.com/dfer-site/DferTune/releases) 页面下载最新的 `.zip` 压缩包。
-2. 将压缩包内容解压到 SD 卡根目录。
-3. 把 MP3、FLAC、WAV 等音频文件放到 SD 卡上。
-4. 呼出 Tesla 悬浮菜单,打开 DferTune 控制播放和设置。
+### 前置条件
 
-提示:DferTune 使用独立的 Title ID(`0x420000000000000F`)和配置目录(`/config/DferTune/`),不会覆盖原版 sys-tune 或 RyazhaTune。同时运行多个后台音乐模块会互相争抢音频,建议只启用其中一个。
+- 已安装 [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere) 自制系统。
+- 已安装 Tesla 悬浮菜单环境(`nx-ovlloader` 加 Tesla Menu 或 Ultrahand 等)。DferTune 的控制界面是 Tesla 悬浮菜单插件,没有它就无法打开。
+
+### 发布包里有什么
+
+[Releases](https://github.com/dfer-site/DferTune/releases) 页面有两个文件:
+
+| 文件 | 用途 |
+|---|---|
+| `DferTune.zip` | **完整安装包**,首次安装请下载这个。包含后台模块、悬浮菜单、语言文件和默认配置。 |
+| `DferTune-Overlay.ovl` | 只有悬浮菜单插件。仅在你已经装好完整包、只想单独更新悬浮菜单时使用。 |
+
+### 首次安装
+
+1. 下载 `DferTune.zip`,解压到 SD 卡**根目录**。解压后会得到:
+   ```
+   atmosphere/contents/420000000000000F/   后台模块(含 boot2.flag,开机自启)
+   config/DferTune/                        默认配置和语言文件
+   switch/.overlays/DferTune-Overlay.ovl   悬浮菜单插件
+   ```
+2. 把 MP3、FLAC、WAV 等音频文件放到 SD 卡任意位置(例如 `/music/`)。
+3. **完整重启** Atmosphère(关机后重新进入系统),让后台模块随系统启动。
+
+### 使用悬浮菜单(DferTune-Overlay.ovl)
+
+`.ovl` 不是独立程序,不能直接运行,需要由 Tesla 加载:
+
+1. 在系统或游戏中,按 Tesla 的呼出组合键打开 Tesla 菜单。默认组合键因 Tesla 版本和设置而不同(常见为 `L + ↓ + 右摇杆按下`),可以在 Tesla 菜单的设置里查看或修改。
+2. 在列表中选择 **DferTune** 进入控制界面。
+3. 首次使用:进入「浏览」,找到音乐所在文件夹,选择文件后「添加到列表」,再到「播放列表」页开始播放。
+4. 在「设置」里可以调整音量、随机/重复、均衡器、开机自动播放、按游戏过滤和界面语言(简体中文 / English)。
+
+### 单独更新悬浮菜单
+
+只想换新版悬浮菜单时:下载 `DferTune-Overlay.ovl`,覆盖 SD 卡上的 `/switch/.overlays/DferTune-Overlay.ovl`,再重新打开 Tesla 菜单即可。注意后台模块没有更新,如果新版悬浮菜单要求新版后台模块,请改用完整的 `DferTune.zip`。
+
+### 常见问题
+
+- **Tesla 菜单里看不到 DferTune**:确认文件在 `/switch/.overlays/`,并且 Tesla 环境本身能正常打开。
+- **打开后提示错误或无法控制**:通常是后台模块没有运行。确认 `atmosphere/contents/420000000000000F/` 完整、含 `flags/boot2.flag`,并完整重启过 Atmosphère。
+- **想保留原有设置**:更新时不要覆盖 `/config/DferTune/config.ini`。
+- DferTune 使用独立的 Title ID(`0x420000000000000F`)和配置目录(`/config/DferTune/`),不会覆盖原版 sys-tune 或 RyazhaTune。同时运行多个后台音乐模块会互相争抢音频,建议只启用其中一个。
 
 ## 项目结构
 
