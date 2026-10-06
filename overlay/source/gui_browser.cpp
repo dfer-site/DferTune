@@ -4,6 +4,8 @@
 #include "config/config.hpp"
 #include "play_context.hpp"
 #include "tag_reader.hpp"
+#include "elm_textblock.hpp"
+#include "elm_wrappedheader.hpp"
 #include "symbol.hpp"
 #include "tune.h"
 #include "strings.hpp"
@@ -399,6 +401,8 @@ void BrowserGui::buildList() {
     constexpr u32 kScanMax = 2048;
     bool hit_max = false;
     s64 count = 0;
+    // Counted only to explain an empty list: what was seen but not shown.
+    s64 hidden_skipped = 0, unsupported_files = 0;
     std::vector<FsDirectoryEntry> entries(64);
 
     while (R_SUCCEEDED(fsDirRead(&dir, &count, entries.size(), entries.data())) && count) {
@@ -409,7 +413,11 @@ void BrowserGui::buildList() {
             }
 
             const auto &entry = entries[i];
-            if (entry.name[0] == '.') continue;  // skip hidden and . / ..
+            if (entry.name[0] == '.') {          // skip hidden and . / ..
+                if (std::strcmp(entry.name, ".") != 0 && std::strcmp(entry.name, "..") != 0)
+                    ++hidden_skipped;
+                continue;
+            }
 
             if (entry.type == FsDirEntryType_Dir) {
                 const std::string sub_path  = m_cwd + entry.name + "/";
@@ -446,6 +454,8 @@ void BrowserGui::buildList() {
                     std::move(ta.title),
                     std::move(ta.artist)
                 });
+            } else if (entry.type == FsDirEntryType_File) {
+                ++unsupported_files;
             }
         }
 
@@ -468,7 +478,29 @@ void BrowserGui::buildList() {
     }
 
     if (folders.empty() && file_entries.empty()) {
-        m_list->addItem(new tsl::elm::CompactCategoryHeader(i18n::t(i18n::Str::EmptyFolder)));
+        addWrappedHeader(m_list, i18n::t(i18n::Str::EmptyFolder));
+
+        // Say WHY nothing is listed, so "really empty" and "files were filtered"
+        // are not the same silent screen.
+        std::string reason;
+        char line[256];
+        if (unsupported_files > 0) {
+            std::snprintf(line, sizeof(line), i18n::t(i18n::Str::EmptyReasonUnsupportedFmt),
+                          static_cast<long long>(unsupported_files));
+            reason += line;
+        }
+        if (hidden_skipped > 0) {
+            std::snprintf(line, sizeof(line), i18n::t(i18n::Str::EmptyReasonHiddenFmt),
+                          static_cast<long long>(hidden_skipped));
+            if (!reason.empty()) reason += "\n";
+            reason += line;
+        }
+        if (reason.empty())
+            reason = i18n::t(i18n::Str::EmptyReasonNothing);
+
+        const s32 rowWidth = static_cast<s32>(tsl::cfg::FramebufferWidth) - 85;
+        auto *note = new TextBlock("", reason, rowWidth, /*focusable=*/false);
+        m_list->addItem(note, note->preferredHeight());
         return;
     }
 
@@ -503,7 +535,7 @@ void BrowserGui::buildList() {
             " Y " + i18n::t(i18n::Str::AddToPlaylistShort) + " " + ult::DIVIDER_SYMBOL +
             " − " + i18n::t(i18n::Str::SetAsStartupShort) + " " + ult::DIVIDER_SYMBOL +
             " B " + i18n::t(i18n::Str::Back);
-        m_list->addItem(new tsl::elm::CompactCategoryHeader(folder_hint, true));
+        addWrappedHeader(m_list, folder_hint);
 
         std::sort(folders.begin(), folders.end(), ListItemTextCompare);
         for (auto *el : folders) {
@@ -527,7 +559,7 @@ void BrowserGui::buildList() {
             "X " + i18n::t(i18n::Str::AddAll) + "  " +
             "− " + i18n::t(i18n::Str::SetAsStartupShort) + "  " +
             "B " + i18n::t(i18n::Str::Back);
-        m_list->addItem(new tsl::elm::CompactCategoryHeader(file_hint, true));
+        addWrappedHeader(m_list, file_hint);
 
         std::sort(file_entries.begin(), file_entries.end(), FileEntryCompare);
 

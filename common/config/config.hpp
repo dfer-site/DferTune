@@ -147,6 +147,11 @@ void ensure_language_config();
 auto get_language(char* out, int max_len) -> int;
 void set_language(const char* language);
 
+// Width of the overlay panel in pixels (config.ini: overlay_width). Tesla's default is 448;
+// wider shows more text. Always a multiple of 32 within 448..704, as the block-linear
+// framebuffer requires. 576 when not set.
+auto get_overlay_width() -> int;
+
 // Five-band equalizer for DferTune music or system/game output.
 TuneEqualizerSettings get_equalizer_settings();
 void set_equalizer_settings(const TuneEqualizerSettings& settings);

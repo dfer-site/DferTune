@@ -1,0 +1,42 @@
+name: "编译检查(仅构建,不发布)"
+
+# 临时工作流:正式工作流只在版本号变化时才构建,这里每次推送 main 都完整编译一次,
+# 用来确认改动在 devkitA64 下能通过。确认后会删除本文件。
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Makefile'
+      - 'DferTune/**'
+      - 'common/**'
+      - 'ipc/**'
+      - 'overlay/**'
+      - '.github/workflows/dev-compile-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+    steps:
+      - name: 安装依赖
+        run: apt-get update && apt-get install -y git curl
+
+      - name: 检出源码
+        uses: actions/checkout@v7
+
+      - name: 配置 Git 安全目录
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: 准备依赖库
+        run: make prepare-overlay-lib
+
+      - name: 构建项目
+        run: make clean && make -j$(nproc)
+
+      - name: 检查构建产物
+        run: ls -l DferTune/DferTune.nsp overlay/DferTune-Overlay.ovl

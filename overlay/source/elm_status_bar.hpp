@@ -3,6 +3,7 @@
 #include "../../ipc/tune.h"
 #include "symbol.hpp"
 
+#include <algorithm>
 #include <functional>
 #include <string>
 #include <vector>
@@ -109,13 +110,17 @@ class StatusBar final : public tsl::elm::Element {
     void hotkeyPlayPause() { PressButton(2, false); }
     void hotkeyNext()      { PressButton(3, false); }
 
+    /* The cover is capped so the player (cover, title, seek bar, buttons) still fits
+       the screen height when the panel is made wider. */
+    static constexpr s32 kMaxArt = 300;
+
     static s32 PreferredHeight(s32 contentWidth) {
-        s32 art = (contentWidth - 30) * 9 / 10;   /* matches ArtSize() */
+        s32 art = std::min((contentWidth - 30) * 9 / 10, kMaxArt);   /* matches ArtSize() */
         return art + 54 + tsl::style::ListItemDefaultHeight * 3;
     }
 
   private:
-    ALWAYS_INLINE s32 ArtSize()   { return (this->getWidth() - 30) * 9 / 10; }
+    ALWAYS_INLINE s32 ArtSize()   { return std::min((this->getWidth() - 30) * 9 / 10, kMaxArt); }
     ALWAYS_INLINE s32 ArtOffset() { return ArtSize() + 14; }
 
     ALWAYS_INLINE constexpr s32 CenterOfLine(u8 line) {

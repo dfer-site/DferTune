@@ -199,5 +199,8 @@
     "Website": "网站",
     "License": "许可证",
     "Based on": "基于",
-    "Added %lld, replaced %lld, skipped %lld, failed %lld.": "新增%lld首，覆盖%lld首，跳过%lld首，失败%lld首。"
+    "Added %lld, replaced %lld, skipped %lld, failed %lld.": "新增%lld首，覆盖%lld首，跳过%lld首，失败%lld首。",
+    "Nothing was found in this folder. If your computer shows songs here, Chinese file names may be unreadable on the Switch: rename them to English (keep the Chinese title in the tags).": "这个文件夹里没有读到任何内容。如果你在电脑上看到里面有歌,可能是中文文件名,Switch 读不到:请把文件名改成英文(中文歌名放在标签里)。",
+    "%lld file(s) here are in a format DferTune cannot play. Supported: mp3, flac, wav, wave, ogg.": "这里有 %lld 个文件的格式 DferTune 不能播放。支持的格式:mp3、flac、wav、wave、ogg。",
+    "%lld hidden item(s) starting with '.' were skipped.": "已跳过 %lld 个以 . 开头的隐藏项。"
 }

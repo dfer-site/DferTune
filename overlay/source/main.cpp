@@ -108,6 +108,10 @@ class SysTuneOverlay final : public tsl::Overlay {
         reloadDferTuneTranslations();
         i18n::syncFromConfig();
 
+        // initServices() runs right before Tesla creates the framebuffer, so this
+        // is the moment to make the panel wider than Tesla's 448 px default.
+        ult::DefaultFramebufferWidth = static_cast<u16>(config::get_overlay_width());
+
         u32 api = 0;
         if (R_FAILED(tuneGetApiVersion(&api)) || api != TUNE_API_VERSION) {
             /* The running sysmodule has a different API version (e.g. an old

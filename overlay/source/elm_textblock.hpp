@@ -14,13 +14,15 @@
  */
 class TextBlock final : public tsl::elm::Element {
 public:
-    /** @param width Full width of the list row (FramebufferWidth - 85). */
-    TextBlock(std::string heading, std::string body, s32 width)
+    /** @param width     Full width of the list row (FramebufferWidth - 85).
+     *  @param focusable Pass false for a short note that must not take the cursor
+     *                   (it then cannot be scrolled to, so keep it brief). */
+    TextBlock(std::string heading, std::string body, s32 width, bool focusable = true)
         : m_heading(std::move(heading))
         , m_body(std::move(body))
         , m_textWidth(width - 2 * kPadX)
     {
-        m_isItem = true;
+        m_isItem = focusable;
         m_bodyTop = m_heading.empty() ? 10 : 44;
         const s32 bodyHeight = tsl::gfx::Renderer::get()
             .getTextDimensions(m_body, false, kBodyFont, m_textWidth).second;

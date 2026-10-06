@@ -63,14 +63,15 @@ inline void draw(tsl::gfx::Renderer *renderer) {
     constexpr s32 kPadX     = 12;
     constexpr s32 kPadY     = 8;
     constexpr s32 kGap      = 8;
-    constexpr s32 kMaxTextW = 340;
 
     const s32 screenW = static_cast<s32>(tsl::cfg::FramebufferWidth);
     const s32 screenH = static_cast<s32>(tsl::cfg::FramebufferHeight);
+    // Use most of the panel width; text that is still longer wraps to more lines.
+    const s32 maxTextW = std::max<s32>(200, screenW - 2 * (8 + kPadX) - 20);
     const s32 minY    = 100;            // below the title / clock header
     const s32 maxY    = screenH - 80;   // above the footer buttons
 
-    const auto dim = renderer->getTextDimensions(r.text, false, kFont, kMaxTextW);
+    const auto dim = renderer->getTextDimensions(r.text, false, kFont, maxTextW);
     const s32 w = dim.first  + 2 * kPadX;
     const s32 h = dim.second + 2 * kPadY;
 
@@ -91,7 +92,7 @@ inline void draw(tsl::gfx::Renderer *renderer) {
     renderer->drawRoundedRect(x - 1, y - 1, w + 2, h + 2, 9, border);
     renderer->drawRoundedRect(x, y, w, h, 8, fill);
     renderer->drawString(r.text, false, x + kPadX, y + kPadY + static_cast<s32>(kFont) - 3,
-                         kFont, text, kMaxTextW);
+                         kFont, text, maxTextW);
 }
 
 } // namespace tip

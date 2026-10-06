@@ -108,6 +108,9 @@ constexpr std::array<Pair, static_cast<std::size_t>(Str::Count_)> kPairs = {{
     {"Website"},
     {"License"},
     {"Based on"},
+    {"Nothing was found in this folder. If your computer shows songs here, Chinese file names may be unreadable on the Switch: rename them to English (keep the Chinese title in the tags)."},
+    {"%lld file(s) here are in a format DferTune cannot play. Supported: mp3, flac, wav, wave, ogg."},
+    {"%lld hidden item(s) starting with '.' were skipped."},
 }};
 
 
@@ -204,6 +207,9 @@ constexpr std::array<const char *, static_cast<std::size_t>(Str::Count_)> kZhCn 
     "网站",
     "许可证",
     "基于",
+    "这个文件夹里没有读到任何内容。如果你在电脑上看到里面有歌,可能是中文文件名,Switch 读不到:请把文件名改成英文(中文歌名放在标签里)。",
+    "这里有 %lld 个文件的格式 DferTune 不能播放。支持的格式:mp3、flac、wav、wave、ogg。",
+    "已跳过 %lld 个以 . 开头的隐藏项。",
 }};
 
 constexpr std::array<LocaleTable, 1> kLocaleTables = {{

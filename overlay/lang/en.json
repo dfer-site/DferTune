@@ -199,5 +199,8 @@
     "Website": "Website",
     "License": "License",
     "Based on": "Based on",
-    "Added %lld, replaced %lld, skipped %lld, failed %lld.": "Added %lld, replaced %lld, skipped %lld, failed %lld."
+    "Added %lld, replaced %lld, skipped %lld, failed %lld.": "Added %lld, replaced %lld, skipped %lld, failed %lld.",
+    "Nothing was found in this folder. If your computer shows songs here, Chinese file names may be unreadable on the Switch: rename them to English (keep the Chinese title in the tags).": "Nothing was found in this folder. If your computer shows songs here, Chinese file names may be unreadable on the Switch: rename them to English (keep the Chinese title in the tags).",
+    "%lld file(s) here are in a format DferTune cannot play. Supported: mp3, flac, wav, wave, ogg.": "%lld file(s) here are in a format DferTune cannot play. Supported: mp3, flac, wav, wave, ogg.",
+    "%lld hidden item(s) starting with '.' were skipped.": "%lld hidden item(s) starting with '.' were skipped."
 }

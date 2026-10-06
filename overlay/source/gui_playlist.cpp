@@ -1,4 +1,5 @@
 #include "gui_playlist.hpp"
+#include "elm_wrappedheader.hpp"
 #include "gui_main.hpp"
 
 #include "elm_overlayframe.hpp"
@@ -268,7 +269,7 @@ PlaylistGui::PlaylistGui(std::function<void(u32)> on_count_changed)
         "X " + i18n::t(i18n::Str::RemoveAll) + "  " +
         "− " + i18n::t(i18n::Str::SetAsStartupShort) + "  " +
         "\uE0EB\uE0EC " + i18n::t(i18n::Str::Playlist);
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(playlist_hint, true));
+    addWrappedHeader(m_list, playlist_hint);
 
     m_items.reserve(count);
 

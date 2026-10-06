@@ -412,6 +412,12 @@ auto get_language(char* out, int max_len) -> int {
     return ini_gets("config", "language", "zh-cn", out, max_len, CONFIG_PATH);
 }
 
+auto get_overlay_width() -> int {
+    const long raw = ini_getl("config", "overlay_width", 576, CONFIG_PATH);
+    const long width = std::clamp(raw, 448L, 704L);
+    return static_cast<int>(width / 32 * 32);
+}
+
 void set_language(const char* language) {
     create_config_dir();
     ini_puts("config", "language", language, CONFIG_PATH);

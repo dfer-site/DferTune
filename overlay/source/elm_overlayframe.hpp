@@ -176,7 +176,7 @@ public:
 
         // --- Edge separator ---
         if (!ult::useRightAlignment)
-            renderer->drawRect(447, 0, 448, 720, a(tsl::edgeSeparatorColor));
+            renderer->drawRect(static_cast<s32>(tsl::cfg::FramebufferWidth) - 1, 0, 1, 720, a(tsl::edgeSeparatorColor));
         else
             renderer->drawRect(0, 0, 1, 720, a(tsl::edgeSeparatorColor));
 

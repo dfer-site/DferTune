@@ -99,6 +99,11 @@ enum class Str : std::uint8_t {
     Website,
     License,
     BasedOn,
+    EmptyReasonNothing,
+    /** snprintf format, one arg: long long file count */
+    EmptyReasonUnsupportedFmt,
+    /** snprintf format, one arg: long long item count */
+    EmptyReasonHiddenFmt,
     Count_
 };
 

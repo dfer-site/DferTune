@@ -4,6 +4,7 @@
 #include "elm_equalizer.hpp"
 #include "elm_volume.hpp"
 #include "elm_textblock.hpp"
+#include "elm_wrappedheader.hpp"
 #include "gui_browser.hpp"
 #include "gui_playlist.hpp"
 #include "play_context.hpp"
@@ -390,8 +391,8 @@ tsl::elm::Element* LanguageGui::createUI() {
     m_frame = new SysTuneOverlayFrame(/*pageLeft=*/i18n::t(i18n::Str::Settings), /*pageRight=*/"");
     m_list = new tsl::elm::List();
 
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        sectionTitle("Language", "Changes apply instantly")));
+    addWrappedHeader(m_list,
+        sectionTitle("Language", "Changes apply instantly"));
 
     const size_t selected = currentLanguageIndex();
     for (size_t i = 0; i < std::size(kLanguages); ++i) {
@@ -452,7 +453,7 @@ tsl::elm::Element* HelpGui::createUI() {
     m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
     m_list = new tsl::elm::List();
 
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(i18n::t(i18n::Str::Help)));
+    addWrappedHeader(m_list, i18n::t(i18n::Str::Help));
 
     const s32 rowWidth = static_cast<s32>(tsl::cfg::FramebufferWidth) - 85;
     const i18n::InfoSections help = i18n::helpSections();
@@ -481,7 +482,7 @@ tsl::elm::Element* AboutGui::createUI() {
     m_frame = new SysTuneOverlayFrame(/*pageLeft=*/"", /*pageRight=*/"");
     m_list = new tsl::elm::List();
 
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(i18n::t(i18n::Str::About)));
+    addWrappedHeader(m_list, i18n::t(i18n::Str::About));
 
     const s32 rowWidth = static_cast<s32>(tsl::cfg::FramebufferWidth) - 85;
     const i18n::InfoSections intro = i18n::aboutSections();
@@ -526,8 +527,8 @@ tsl::elm::Element* StartupSettingsGui::createUI() {
     m_frame = new SysTuneOverlayFrame(i18n::t(i18n::Str::Settings),
                                       i18n::t(i18n::Str::StartupSettings));
     m_list = new tsl::elm::List();
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        sectionTitle("Startup", "System events")));
+    addWrappedHeader(m_list,
+        sectionTitle("Startup", "System events"));
 
     const config::StartupPolicy initial = config::get_startup_policy();
 
@@ -716,8 +717,8 @@ tsl::elm::Element* EqualizerGui::createUI() {
     if (R_FAILED(tuneGetEqualizerSettings(&m_settings)))
         m_settings = config::get_equalizer_settings();
 
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        sectionTitle("Live tuner", "Changes apply instantly")));
+    addWrappedHeader(m_list,
+        sectionTitle("Live tuner", "Changes apply instantly"));
 
     std::array<s8, TUNE_EQUALIZER_BAND_COUNT> tunerGains{};
     std::copy(std::begin(m_settings.gains_db), std::end(m_settings.gains_db), tunerGains.begin());
@@ -727,8 +728,8 @@ tsl::elm::Element* EqualizerGui::createUI() {
     m_list->addItem(m_tuner, 226);
     m_frame->addHint(m_tuner, i18n::Hint::EqTuner);
 
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        sectionTitle("A edit/B done · L/R band · ↑/↓ gain", "Music DSP · Game/System output")));
+    addWrappedHeader(m_list,
+        sectionTitle("A edit/B done · L/R band · ↑/↓ gain", "Music DSP · Game/System output"));
 
     m_enable_toggle = new tsl::elm::CompactToggleListItem(
         i18n::text("Equalizer"), m_settings.enabled != 0,
@@ -848,8 +849,8 @@ tsl::elm::Element* SettingsGui::createUI() {
     m_list = new tsl::elm::List();
 
     // ---- Music Selection ----
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        sectionTitle("Music Library", "Choose source")));
+    addWrappedHeader(m_list,
+        sectionTitle("Music Library", "Choose source"));
 
     /* Snapshot play_ctx state once so both buttons get the right initial value
        on frame 0, before any update() tick fires. */
@@ -897,8 +898,8 @@ tsl::elm::Element* SettingsGui::createUI() {
     m_frame->addHint(browser_button, i18n::Hint::Browse);
 
     // ---- Volume ----
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        std::string(i18n::t(i18n::Str::Volume)) + " " + ult::DIVIDER_SYMBOL + " \uE13C " + i18n::t(i18n::Str::ToggleMute)));
+    addWrappedHeader(m_list,
+        std::string(i18n::t(i18n::Str::Volume)) + " " + ult::DIVIDER_SYMBOL + " \uE13C " + i18n::t(i18n::Str::ToggleMute));
 
     float tune_volume = 1.f, title_volume = 1.f, default_title_volume = 1.f;
     tuneGetVolume(&tune_volume);
@@ -967,8 +968,8 @@ tsl::elm::Element* SettingsGui::createUI() {
     }
 
     // ---- Sound shaping ----
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        sectionTitle("Sound", "Live processing")));
+    addWrappedHeader(m_list,
+        sectionTitle("Sound", "Live processing"));
     TuneEqualizerSettings equalizer_state{};
     const bool equalizer_enabled =
         R_SUCCEEDED(tuneGetEqualizerSettings(&equalizer_state)) && equalizer_state.enabled;
@@ -1127,8 +1128,8 @@ tsl::elm::Element* SettingsGui::createUI() {
     }
 
     // ---- Misc ----
-    m_list->addItem(new tsl::elm::CompactCategoryHeader(
-        sectionTitle("Playback", "Rules and language")));
+    addWrappedHeader(m_list,
+        sectionTitle("Playback", "Rules and language"));
 
     {
         auto modeLabel = []() -> const char* {
