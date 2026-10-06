@@ -56,6 +56,7 @@
 - 界面加宽：`ult::DefaultFramebufferWidth` 默认 448，`main.cpp` 的 `initServices()` 里（在 Tesla 创建帧缓冲之前）改成 `config::get_overlay_width()`，读 `config.ini` 的 `overlay_width`，默认 576，范围 448..704 且必须是 32 的倍数（块线性帧缓冲的行跨度是 `FramebufferWidth/4`，非 32 倍数会错位）。宽度不是 448 时库的 `correctFrameSize` 为假：自定义壁纸 `wallpaper.rgba` 不显示、右对齐不生效。播放页封面 `kMaxArt=300`，保证一屏放得下。
 - `elm_wrappedheader.hpp`：`WrappedHeader`/`addWrappedHeader` 取代会跑马灯的 `CompactCategoryHeader`（带右侧值的 “Current game” 标题除外），长文字换行、单行时与原来同样 33px。列表行 `ListItem` 本身选中时就会自动滚动长文字。
 - 浏览页空目录会说明原因（没读到内容 / N 个文件格式不支持 / 跳过 N 个隐藏项），用不可聚焦的 `TextBlock`。
+- 转换脚本新规则（py 和 bat 一致）：默认在**原文件夹里**生成 `0001_<哈希6位>.<扩展名>` 副本，原文件不动；同一首歌（哈希按原文件名主干，键为“哈希+扩展名”）再次运行时**覆盖**上次的副本，新歌序号接在已有最大序号后面，已转换的 `0001_xxxxxx.ext` 不再当作新歌；前 300 首放文件夹本身，其后 `part02`、`part03`…（按序号分组，与总数无关）；`对照表.csv` 合并更新。DferTune 的「添加全部」只取前 300 个文件，所以必须分文件夹。bat 的注释和提示是中文，但可执行命令行保持纯 ASCII（cmd 对非 ASCII 不可靠），提示由 PowerShell 显示。
 - `scripts/music_to_ascii.bat`：bat 只含 ASCII，真正逻辑在文件后半段的 PowerShell，用 `#PS`+`-BEGIN` 标记（拼接写法避免命令行里自己匹配到自己）经 `Invoke-Expression` 运行，参数走环境变量 `MTA_SRC/MTA_RECURSE/MTA_BAT`。在 Linux 上用官方 PowerShell 7 测过（下载 `PowerShell/PowerShell` releases 的 linux-x64 tar 到独立目录），样本含 GBK、UTF-16、ID3v2.2/2.3/2.4、空歌名、封面帧；mp3 之外只改名。bat 注释里不能出现 `> | & ^ % ( )`。
 - 验证方式更新：先把只编译的临时工作流 `dev-compile-check.yml`（`on: push` 到 main，容器 `devkitpro/devkita64`）和代码一起推到 main，看到编译通过后再用 `[skip ci]` 提交删除它。版本号不变时发布工作流不会构建，只会跑 `sync-release-notes`。
 

@@ -121,16 +121,16 @@ DferTune 是 Nintendo Switch 的后台音乐播放器(sysmodule + Tesla 悬浮�
 
 - **Tesla 菜单里看不到 DferTune**:确认文件在 `/switch/.overlays/`,并且 Tesla 环境本身能正常打开。
 - **打开后提示错误或无法控制**:通常是后台模块没有运行。确认 `atmosphere/contents/420000000000000F/` 完整、含 `flags/boot2.flag`,并完整重启过 Atmosphère。
-- **中文文件名的歌在 DBI 和 DferTune 里都看不到,英文名就正常**:这是 Switch 对 SD 卡文件名的读取问题,不是 DferTune 的问题(两个程序读目录用的是同一套系统接口)。解决办法是让**文件名用英文,中文歌名放在歌曲标签里**,DferTune 的列表显示的是标签里的歌名和歌手。仓库里有现成的脚本 [`scripts/music_to_ascii.py`](scripts/music_to_ascii.py):
+- **中文文件名的歌在 DBI 和 DferTune 里都看不到,英文名就正常**:这是 Switch 对 SD 卡文件名的读取问题,不是 DferTune 的问题(两个程序读目录用的是同一套系统接口)。解决办法是让**文件名用英文,中文歌名放在歌曲标签里**,DferTune 的列表显示的是标签里的歌名和歌手。仓库里有两个现成的脚本,效果相同:
+  - **Windows 直接用**:[`scripts/music_to_ascii.bat`](scripts/music_to_ascii.bat)。把音乐文件夹**拖到这个 bat 文件上**(或双击后输入文件夹路径;路径后加 `-r` 可包含子文件夹),不用装任何东西,Windows 自带的 PowerShell 就能运行。
+  - **有 Python 的话**:[`scripts/music_to_ascii.py`](scripts/music_to_ascii.py)(`pip install mutagen`,然后 `python music_to_ascii.py F:\music`)。它还能处理 flac / wav 的标签。
 
-  ```
-  pip install mutagen
-  python music_to_ascii.py F:\music F:\music_ascii
-  ```
-
-  **不想装 Python?** 用同目录的 [`scripts/music_to_ascii.bat`](scripts/music_to_ascii.bat):把音乐文件夹**拖到这个 bat 文件上**(或双击后输入文件夹路径,加 `-r` 可包含子文件夹),Windows 自带的 PowerShell 就能运行。它同样只复制,会修好 mp3 的 GBK 乱码标签、给没有歌名的 mp3 补上歌名;`flac` / `wav` 只改文件名,不处理标签(这两种格式请用 Python 脚本)。
-
-  两个脚本都只**复制**、不修改原文件:文件改成 `0001_a1b2c3.mp3` 这样的英文名;没有歌名标签的,把原来的中文文件名写进去;旧式 GBK 乱码标签会修成 Unicode;每个文件夹最多 300 首(超过自动拆成 `part01`、`part02`…);并生成 `对照表.csv`。处理完把输出文件夹里的内容放进 SD 卡的 `/music/` 即可。
+  两个脚本的规则一样:
+  - **就在原文件夹里生成**英文名的副本,如 `0001_a1b2c3.mp3`(序号加原名的短哈希)。你的中文名原文件**不会被改动或删除**,确认副本正常后可以自己删掉原文件。
+  - **同名直接覆盖**:再次运行时,同一首歌(按原文件名识别)覆盖它上次生成的副本;新增的歌曲接在已有序号后面;已经生成的 `0001_xxxxxx.mp3` 不会被当成新歌重复转换。运行结束会显示"新增 / 覆盖"各多少首。
+  - 没有歌名标签的 mp3,把原来的中文文件名写进歌名标签;旧式 GBK 乱码标签会修成 Unicode(flac / wav 的标签只有 Python 版处理,bat 只给它们改文件名)。
+  - 每个文件夹最多放 300 首(DferTune 的"添加全部"只会添加前 300 首):前 300 首放在文件夹本身,之后依次放进 `part02`、`part03` 子文件夹。
+  - 生成 `对照表.csv`(再次运行时合并更新),记录新旧文件名和歌名。
 - **界面太窄、文字显示不全**:悬浮菜单默认宽 576 像素(Tesla 默认是 448)。过长的提示标题会自动换行,列表行里过长的文字在选中时会自动左右滚动,气泡提示也会按宽度换行。想调整宽度,编辑 `/config/DferTune/config.ini` 里 `[config]` 下的 `overlay_width`:范围 448 到 704,必须是 32 的倍数(不是的话会向下取整),写 `448` 即恢复 Tesla 默认宽度。注意:宽度不是 448 时,自定义壁纸(`wallpaper.rgba`)不会显示。
 - **想保留原有设置**:更新时不要覆盖 `/config/DferTune/config.ini`。
 - DferTune 使用独立的 Title ID(`0x420000000000000F`)和配置目录(`/config/DferTune/`),不会覆盖原版 sys-tune 或 RyazhaTune。同时运行多个后台音乐模块会互相争抢音频,建议只启用其中一个。
